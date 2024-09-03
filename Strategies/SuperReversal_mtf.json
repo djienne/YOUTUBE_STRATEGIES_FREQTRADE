@@ -1,0 +1,27 @@
+{
+  "strategy_name": "SuperReversal_mtf",
+  "params": {
+    "roi": {
+      "0": 500.0
+    },
+    "stoploss": {
+      "stoploss": -0.75
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "buy": {
+      "long_ema_window": 545,
+      "short_ema_window": 30,
+      "st_short_atr_multiplier": 5.5,
+      "st_short_atr_window": 10
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2023-12-02 12:59:54.935445+00:00"
+}

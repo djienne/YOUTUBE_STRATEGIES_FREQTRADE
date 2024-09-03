@@ -1,0 +1,1 @@
+Depot contenant les fichiers de stratégies et de configurations présentés dans la chaine Youtube.
