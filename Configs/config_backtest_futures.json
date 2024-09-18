@@ -1,0 +1,148 @@
+{
+    "max_open_trades": 12,
+    "stake_currency": "USDT",
+    "stake_amount": "unlimited",
+    "tradable_balance_ratio": 0.99,
+    "amount_reserve_percent": 0.01,
+    "available_capital": 1000,
+    "dry_run_wallet": 1000,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "fee": 0.001,
+    "cancel_open_orders_on_exit": true,
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "unfilledtimeout": {
+        "entry": 15,
+        "exit": 15,
+        "exit_timeout_count": 10,
+        "unit": "seconds"
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "",
+        "secret": "",
+        "ccxt_config": {
+            "enableRateLimit": true,
+            "rateLimit": 50
+        },
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 50
+        },
+        "pair_whitelist": [
+            "BTC/USDT:USDT",
+            "ETH/USDT:USDT",
+            "BNB/USDT:USDT",
+            "SOL/USDT:USDT",
+            "XRP/USDT:USDT",
+            "DOGE/USDT:USDT",
+            "TRX/USDT:USDT",
+            "TON/USDT:USDT",
+            "ADA/USDT:USDT",
+            "AVAX/USDT:USDT",
+            "LINK/USDT:USDT",
+            "BCH/USDT:USDT",
+            "DOT/USDT:USDT",
+            "LTC/USDT:USDT",
+            "NEAR/USDT:USDT",
+            "MATIC/USDT:USDT",
+            "UNI/USDT:USDT",
+            "ICP/USDT:USDT",
+            "APT/USDT:USDT",
+            "FET/USDT:USDT",
+            "XLM/USDT:USDT",
+            "ETC/USDT:USDT",
+            "STX/USDT:USDT",
+            "SUI/USDT:USDT",
+            "FIL/USDT:USDT",
+            "IMX/USDT:USDT",
+            "AAVE/USDT:USDT",
+            "HBAR/USDT:USDT",
+            "ARB/USDT:USDT",
+            "ATOM/USDT:USDT",
+            "OP/USDT:USDT",
+            "INJ/USDT:USDT",
+            "MKR/USDT:USDT",
+            "WIF/USDT:USDT",
+            "AR/USDT:USDT",
+            "GRT/USDT:USDT",
+            "THETA/USDT:USDT",
+            "FTM/USDT:USDT",
+            "ALGO/USDT:USDT",
+            "JUP/USDT:USDT",
+            "PYTH/USDT:USDT",
+            "LDO/USDT:USDT",
+            "TIA/USDT:USDT",
+            "FLOW/USDT:USDT",
+            "OM/USDT:USDT",
+            "EGLD/USDT:USDT",
+            "EOS/USDT:USDT",
+            "AXS/USDT:USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList",
+            "number_assets": 48,
+            "sort_key": "quoteVolume",
+            "min_value": 0,
+            "refresh_period": 1800
+        }
+    ],
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.20,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "telegram": {
+        "enabled": false,
+        "token": "",
+        "chat_id": ""
+    },
+    "api_server": {
+        "enabled": true,
+        "listen_ip_address": "0.0.0.0",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "enable_openapi": false,
+        "Force_entry": true,
+        "forcebuy_enable": true,
+        "force_entry_enable": true,
+        "jwt_secret_key": "d1654caf3c530f6b037ae59a999d9d9328dec66bdd68799112cf1ba7d65276a3",
+        "CORS_origins": [],
+        "username": "superman",
+        "password": "popololo"
+    },
+    "bot_name": "SR_LS",
+    "initial_state": "running",
+    "force_entry_enable": true,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}

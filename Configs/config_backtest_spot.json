@@ -1,0 +1,147 @@
+{
+    "max_open_trades": 10,
+    "stake_currency": "USDT",
+    "stake_amount": "unlimited",
+    "tradable_balance_ratio": 0.99,
+    "amount_reserve_percent": 0.01,
+    "available_capital": 1000,
+    "dry_run_wallet": 1000,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "fee": 0.001,
+    "cancel_open_orders_on_exit": true,
+    "trading_mode": "spot",
+    "margin_mode": "",
+    "unfilledtimeout": {
+        "entry": 15,
+        "exit": 15,
+        "exit_timeout_count": 10,
+        "unit": "seconds"
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "",
+        "secret": "",
+        "ccxt_config": {
+            "enableRateLimit": true,
+            "rateLimit": 50
+        },
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 50
+        },
+        "pair_whitelist": [
+            "BTC/USDT",
+            "ETH/USDT",
+            "BNB/USDT",
+            "SOL/USDT",
+            "XRP/USDT",
+            "DOGE/USDT",
+            "TRX/USDT",
+            "TON/USDT",
+            "ADA/USDT",
+            "AVAX/USDT",
+            "LINK/USDT",
+            "BCH/USDT",
+            "DOT/USDT",
+            "LTC/USDT",
+            "NEAR/USDT",
+            "UNI/USDT",
+            "ICP/USDT",
+            "APT/USDT",
+            "FET/USDT",
+            "XLM/USDT",
+            "ETC/USDT",
+            "STX/USDT",
+            "SUI/USDT",
+            "FIL/USDT",
+            "IMX/USDT",
+            "AAVE/USDT",
+            "HBAR/USDT",
+            "ARB/USDT",
+            "ATOM/USDT",
+            "OP/USDT",
+            "INJ/USDT",
+            "MKR/USDT",
+            "WIF/USDT",
+            "AR/USDT",
+            "GRT/USDT",
+            "THETA/USDT",
+            "FTM/USDT",
+            "ALGO/USDT",
+            "JUP/USDT",
+            "PYTH/USDT",
+            "LDO/USDT",
+            "TIA/USDT",
+            "FLOW/USDT",
+            "OM/USDT",
+            "EGLD/USDT",
+            "EOS/USDT",
+            "AXS/USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList",
+            "number_assets": 48,
+            "sort_key": "quoteVolume",
+            "min_value": 0,
+            "refresh_period": 1800
+        }
+    ],
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.20,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "telegram": {
+        "enabled": false,
+        "token": "",
+        "chat_id": ""
+    },
+    "api_server": {
+        "enabled": true,
+        "listen_ip_address": "0.0.0.0",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "enable_openapi": false,
+        "Force_entry": true,
+        "forcebuy_enable": true,
+        "force_entry_enable": true,
+        "jwt_secret_key": "d1654caf3c530f6b037ae59a999d9d9328dec66bdd68799112cf1ba7d65276a3",
+        "CORS_origins": [],
+        "username": "superman",
+        "password": "popololo"
+    },
+    "bot_name": "SR_LS",
+    "initial_state": "running",
+    "force_entry_enable": true,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
