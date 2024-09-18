@@ -1,1 +1,1 @@
-Depot contenant les fichiers de stratégies et de configurations présentés dans la chaine Youtube.
+Depot contenant les fichiers de stratégies et de configurations présentés dans la chaine Youtube Freqtrade FR [https://www.youtube.com/channel/UCtoC-mGBHH7FypB5oAQqX7A](https://www.youtube.com/channel/UCtoC-mGBHH7FypB5oAQqX7A).
