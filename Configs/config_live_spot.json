@@ -1,0 +1,121 @@
+{
+    "max_open_trades": 10,
+    "stake_currency": "USDT",
+    "stake_amount": "unlimited",
+    "tradable_balance_ratio": 0.99,
+    "amount_reserve_percent": 0.01,
+    "available_capital": 1000,
+    "dry_run_wallet": 1000,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "fee": 0.001,
+    "cancel_open_orders_on_exit": true,
+    "trading_mode": "spot",
+    "margin_mode": "",
+    "unfilledtimeout": {
+        "entry": 15,
+        "exit": 15,
+        "exit_timeout_count": 100,
+        "unit": "seconds"
+    },
+    "entry_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "same",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "",
+        "secret": "",
+        "ccxt_config": {
+            "enableRateLimit": true, "rateLimit": 100
+        },
+        "ccxt_async_config": {
+            "enableRateLimit": true, "rateLimit": 100
+        },
+        "pair_whitelist": [],
+        "pair_blacklist": [
+            "KCS/.*",
+            ".*(3L|3S|5L|5S)/.*",
+            "(AUD|BRZ|CAD|CHF|EUR|GBP|HKD|IDRT|JPY|NGN|RUB|SGD|TRY|UAH|USD|ZAR)/.*",
+            "(BUSD|CUSD|CUSDT|DAI|PAXG|SUSD|TUSD|USDC|USDN|USDP|USDT|VAI|UST|USDD|USDJ|USTC|AUSD)/.*",
+            "(ACM|AFA|ALA|ALL|ALPINE|APL|ASR|ATM|BAR|CAI|CITY|FOR|GAL|GOZ|IBFK|JUV|LEG|LOCK-1|NAVI|NMR|NOV|PFL|PORTO|PSG|ROUSH|STV|TH|TRA|UCH|UFC|YBO)/.*",
+            "(UMA|1EARTH|ILA|MEM|AMPL|BOBA|CWAR|OMG|XYM|POLX|CARR|SKEY|KLV|KRL|KOK|DMTR|CHMB|CPOOL|MLS|RBS|SRBS|XDB|SYLO|VR|KARA|ANC|LUNA|SRBP|PSL|AI|QKC|EPK|BAX|UQC|ZBC|ZCX|PLATO|HISAND33|JASMY|HIODBS|ACA)/.*"
+        ]
+    },
+    "pairlists": [
+        {
+            "method": "VolumePairList",
+            "min_days_listed": 30,
+            "number_assets": 50,
+            "sort_key": "quoteVolume",
+            "min_value": 10000000,
+            "refresh_period": 3600
+        },
+        {
+            "method": "AgeFilter",
+            "min_days_listed": 40
+        },
+        {
+            "method": "RangeStabilityFilter",
+            "lookback_days": 10,
+            "min_rate_of_change": 0.01,
+            "max_rate_of_change": 5000.0,
+            "refresh_period": 3600
+        },
+        {
+            "method": "ShuffleFilter",
+            "shuffle_frequency": "candle",
+            "seed": 42
+        }
+    ],
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.20,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "telegram": {
+        "enabled": false,
+        "token": "",
+        "chat_id": ""
+    },
+    "api_server": {
+        "enabled": true,
+        "listen_ip_address": "0.0.0.0",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "enable_openapi": true,
+        "Force_entry": true,
+        "forcebuy_enable": true,
+        "force_entry_enable": true,
+        "jwt_secret_key": "d1654caf3c530f6b037ae59a999d9d9328dec66bdd68799112cf1ba7d65276a3",
+        "CORS_origins": ["http://127.0.0.1:8081"],
+        "username": "superman",
+        "password": "popololo"
+    },
+    "bot_name": "SR_LS",
+    "initial_state": "running",
+    "force_entry_enable": true,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
