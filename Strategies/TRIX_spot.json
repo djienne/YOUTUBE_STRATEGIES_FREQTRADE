@@ -1,0 +1,32 @@
+{
+  "strategy_name": "TRIX_spot",
+  "params": {
+    "roi": {
+      "0": 500.0
+    },
+    "stoploss": {
+      "stoploss": -0.95
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "buy": {
+      "EMA_length": 387,
+      "SRSI_D": 6,
+      "SRSI_K": 4,
+      "rsiLength": 17,
+      "stochLength": 8,
+      "stochOverBought": 0.2,
+      "stochOverSold": 0.7,
+      "trixLength": 4,
+      "trixSignal": 23
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-01-05 09:36:06.020269+00:00"
+}
