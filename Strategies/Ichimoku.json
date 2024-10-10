@@ -1,0 +1,32 @@
+{
+  "strategy_name": "Ichimoku",
+  "params": {
+    "roi": {
+      "0": 5000.0
+    },
+    "stoploss": {
+      "stoploss": -0.75
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 9
+    },
+    "buy": {
+      "ATR_Multip": 1.5,
+      "ATR_length": 11,
+      "KS": 79,
+      "SS": 86,
+      "TS": 37,
+      "rr": 4.0
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2023-12-31 20:36:08.552944+00:00"
+}
