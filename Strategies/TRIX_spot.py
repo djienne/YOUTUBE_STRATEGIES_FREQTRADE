@@ -16,7 +16,6 @@ from freqtrade.strategy import (
 # --------------------------------
 # Add your lib to import here
 import talib.abstract as ta
-import ta as ttaa
 import pandas_ta as pta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 import warnings
