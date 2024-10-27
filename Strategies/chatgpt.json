@@ -1,0 +1,33 @@
+{
+  "strategy_name": "chatgpt",
+  "params": {
+    "roi": {
+      "0": 500.0
+    },
+    "stoploss": {
+      "stoploss": -0.75
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 15
+    },
+    "buy": {
+      "cci_period": 82,
+      "cci_thres": -66,
+      "stc_period": 89,
+      "stc_thres": 0.2,
+      "will_buy_level": -11.0,
+      "will_sell_level": -54.0,
+      "wr_period": 20
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-10-23 17:56:40.047285+00:00"
+}
