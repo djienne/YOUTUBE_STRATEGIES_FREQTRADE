@@ -3,11 +3,8 @@
 Download BTC1! weekly historical data using tvDatafeed.
 
 This script logs in to TradingView, downloads the weekly aggregated
-historical data for BTC1! (assumed here to be a continuous futures contract on CME),
+historical data for BTC1!,
 and saves it as a CSV file.
-
-To run this script on a weekly schedule, consider using your OS's scheduler (e.g., cron on Linux)
-or add scheduling logic (see the commented-out section at the bottom).
 
 to install tvDatafeed:
 pip install --upgrade --no-cache-dir git+https://github.com/rongardF/tvdatafeed.git
@@ -48,24 +45,6 @@ def download_btc1_weekly(n_bars=1000, output_file='BTC1_weekly_data.csv'):
         print("An error occurred while downloading data:", str(e))
 
 if __name__ == '__main__':
-    # Replace these with your actual TradingView username and password
     
     download_btc1_weekly()
-
-    # If you want to schedule this script to run weekly (for example, every Monday at midnight),
-    # you could use the "schedule" library. Uncomment the code below and install schedule (pip install schedule).
-    #
-    # import schedule
-    # import time
-    #
-    # def job():
-    #     download_btc1_weekly(username, password)
-    #
-    # # Schedule the job every Monday at 00:00
-    # schedule.every().monday.at("00:00").do(job)
-    #
-    # print("Scheduler started. Waiting for scheduled run...")
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(60)
 
