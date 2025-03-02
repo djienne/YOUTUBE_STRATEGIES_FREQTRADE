@@ -17,7 +17,7 @@ pip install --upgrade --no-cache-dir git+https://github.com/rongardF/tvdatafeed.
 from tvDatafeed import TvDatafeed, Interval
 import pandas as pd
 
-def download_btc1_weekly(n_bars=370, output_file='BTC1_weekly_data.csv'):
+def download_btc1_weekly(n_bars=1000, output_file='BTC1_weekly_data.csv'):
     try:
         # Initialize the tvDatafeed instance with your TradingView credentials
         tv = TvDatafeed()
