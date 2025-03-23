@@ -368,7 +368,7 @@ class HMMv3(IStrategy):
     minimal_roi = {"0": 5000}
     stoploss = -0.9
     timeframe = '1d'
-    startup_candle_count = 1
+    startup_candle_count = 8
     can_short = True
     process_only_new_candles = True
 
