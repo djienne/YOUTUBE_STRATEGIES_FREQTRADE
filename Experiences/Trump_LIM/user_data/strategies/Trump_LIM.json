@@ -1,0 +1,35 @@
+{
+  "strategy_name": "Trump_LIM",
+  "params": {
+    "roi": {
+      "0": 500.0
+    },
+    "stoploss": {
+      "stoploss": -0.85
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 1
+    },
+    "buy": {
+      "HARD_TP": 0.04,
+      "dca_factor": 1.7,
+      "loss_sep_factor": 0.2,
+      "min_candle_variation": 0.012,
+      "nb_levels": 9,
+      "target_loss": 0.04,
+      "trailing_val": 0.002,
+      "vol_factor": 2,
+      "vol_periods": 62
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2025-01-29 18:58:21.814951+00:00"
+}
