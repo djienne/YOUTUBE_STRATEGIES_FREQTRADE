@@ -130,7 +130,7 @@ def assign_market_signals(df):
 class HMMv3(IStrategy):
     # Strategy parameters
     minimal_roi = {"0": 5000}
-    stoploss = -0.10
+    stoploss = -0.20
     timeframe = '1d'
     startup_candle_count = 1
     can_short = True
