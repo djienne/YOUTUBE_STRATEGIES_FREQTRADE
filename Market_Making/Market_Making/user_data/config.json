@@ -1,0 +1,105 @@
+{
+    "max_open_trades": 1,
+    "stake_currency": "BTC",
+    "stake_amount": "unlimited",
+    "available_capital": 0.01,
+    "tradable_balance_ratio": 0.99,
+    "amount_reserve_percent": 0.01,
+    "dry_run_wallet": 0.01,
+    "fiat_display_currency": "USD",
+    "max_entry_position_adjustment": -1,
+    "position_adjustment_enable": false,
+    "dry_run": true,
+    "fee": 0.0050,
+    "cancel_open_orders_on_exit": true,
+    "trading_mode": "spot",
+    "margin_mode": "",
+    "unfilledtimeout": {
+        "entry": 30,
+        "exit": 30,
+        "exit_timeout_count": 0,
+        "unit": "seconds"
+    },
+    "order_types": {
+        "entry": "limit",
+        "exit": "limit",
+        "stoploss": "limit",
+        "emergency_exit": "market",
+        "stoploss_on_exchange": false
+    },
+    "entry_pricing": {
+        "use_order_book": true,
+        "price_side": "bid",
+        "order_book_top": 1
+    },
+    "exit_pricing": {
+        "use_order_book": true,
+        "price_side": "ask",
+        "order_book_top": 1
+    },
+    "order_time_in_force": {
+        "entry": "GTC",
+        "exit": "GTC"
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "copy paste key",
+        "secret": "copy paste secret key",
+        "ccxt_config": {},
+        "ccxt_async_config": {},
+        "pair_whitelist": [
+            "SLF/BTC"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList",
+            "number_assets": 1,
+            "sort_key": "quoteVolume",
+            "min_value": 10000,
+            "refresh_period": 600
+        }
+    ],
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.20,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "telegram": {
+        "enabled": false,
+        "token": "",
+        "chat_id": "1655109323"
+    },
+    "api_server": {
+        "enabled": true,
+        "listen_ip_address": "0.0.0.0",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "enable_openapi": true,
+        "Force_entry": true,
+        "forcebuy_enable": true,
+        "force_entry_enable": true,
+        "jwt_secret_key": "d1654caf3c530f6b037ae59a999d9d9328dec66bdd68799112cf1ba7d65276a3",
+        "CORS_origins": [
+            "http://127.0.0.1:8080"
+        ],
+        "username": "MM",
+        "password": "iLoveMM"
+    },
+    "bot_name": "SLF_BTC",
+    "initial_state": "running",
+    "force_entry_enable": true,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}

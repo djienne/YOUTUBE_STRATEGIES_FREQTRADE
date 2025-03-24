@@ -1,0 +1,9 @@
+freqtrade download-data --timeframe 1m 5m 15m --days 190 --config ./user_data/config.json
+
+freqtrade backtesting --strategy Market_Making --config ./user_data/config.json --timeframe 1m --timerange 20240701-
+
+freqtrade hyperopt --strategy Market_Making --timeframe 1m --min-trades 25 --config ./user_data/config.json --hyperopt-loss MultiMetricHyperOptLoss --timerange 20240701- --spaces buy -j 8 -e 1000
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade hyperopt-show -n 43
