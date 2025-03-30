@@ -1,1 +1,1 @@
-UPDATED VERSION OF HMM THAT AVOIDS REPAINTING (i.e. FORWARD LOOKING BIAS)
+Repository containing strategy files and configurations presented in the YouTube channel: https://www.youtube.com/@FreqtradeFR
