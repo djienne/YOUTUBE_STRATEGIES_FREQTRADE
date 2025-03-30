@@ -185,15 +185,6 @@ class HMMv3(IStrategy):
         hmm_model = GaussianHMM(n_components=self.n_components.value, covariance_type="full", n_iter=10000, tol=1e-4, algorithm='map')
         hmm_model.fit(data_train[features].values)
 
-        # --- Save the model to pickle if not already saved ---
-        pickle_filename = os.path.join("user_data", "yf_data",f"hmm_model_{coin}_{self.momentum_signal_delay.value}_{self.number_of_momentums_to_use.value}.pkl")
-        if not os.path.exists(pickle_filename):
-            with open(pickle_filename, 'wb') as f:
-                pickle.dump(hmm_model, f)
-            logger.info("Saved HMM model to pickle file: %s", pickle_filename)
-        else:
-            logger.info("Pickle file already exists, not overwriting: %s", pickle_filename)
-
         # --- Prepare test data based on the input dataframe ---
         ft_data = dataframe.copy()
         ft_data['log_returns'] = np.log(ft_data['close'] / ft_data['close'].shift(1))
