@@ -1,0 +1,9 @@
+freqtrade backtesting --strategy FLAGS --config ./user_data/config.json --timeframe 1h --timerange 20190101-20250211
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade download-data --timeframe 15m 1h 5m 1d --timerange 20170101- --config ./user_data/config.json
+
+freqtrade hyperopt --strategy FLAGS --timeframe 1h --config ./user_data/config.json --analyze-per-epoch --hyperopt-loss MultiMetricHyperOptLoss --timerange 20190101-20250211 --min-trades 80 --spaces buy -j 4 -e 5000
+
+freqtrade plot-profit --timeframe 1h
