@@ -90,6 +90,9 @@ def backtest_funding(
         num_hours += 1
         ann_pct = ann_pct_by_dt.get(cur)
 
+        if ann_pct is not None:
+            ann_pct = ann_pct/2.0 # to take into account that only half of the capital gets funding fee
+
         if ann_pct is None and gap_behavior == "skip":
             cur += timedelta(hours=1)
             continue
@@ -125,7 +128,7 @@ def backtest_funding(
 
 # ---------- Run & summary ----------
 if __name__ == "__main__":
-    db_path = "funding_db_for_backtest.json"  # change if needed
+    db_path = "funding_db_test.json"  # change if needed
     coins = ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"]
 
     results = []
