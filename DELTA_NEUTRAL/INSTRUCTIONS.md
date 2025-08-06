@@ -31,9 +31,8 @@
   - **Maximum:** uses `MAX_POSITIONS = 2` pairs at the same time ("position slots"). Can be changed by editing both `max_open_trades` in `config.json` and `MAX_POSITIONS` in `DELTA_NEUTRAL.py`.
   - **Minimum holding time:** `MINIMUM_TIME_FOR_POSITION_HOUR` is set to 120 (5 days), the minimum holding time, enough to offset opening + closing fees. This is a wild guess, did not test it or optimize anything.
   - **Exit triggers for a given pair position:**  
-    - funding turns negative on average over the last *n* hours (here *n*=24 but can be changed),  
     - a clearly better funding/volume pair appears after the minimum holding time (`MINIMUM_TIME_FOR_POSITION_HOUR`)  
-    - short's profit > 33 % or loss < −33 %, will trigger a rebalance to always stay far from liquidation.
+    - short's profit > 50 % or loss < −50 %, will trigger a rebalance to always stay far from liquidation.
 
 - **Pair selection**  
   1. Filter for **funding APR ≥ 10 %** and **quote volume ≥ 2.5 M USDC**.  
@@ -50,7 +49,7 @@
 
 - **Main loop (`bot_loop_start`)**  
   - Sanity checks, updates funding data, volumes, and active positions each cycle, with logs.  
-  - Periodically logs top pairs and warns when funding goes negative.
+  - Periodically logs top pairs.
 
 - **Real order handling**  
   - In `live` mode, places spot legs via Hyperliquid API (`HL_buy_spot_market` / `HL_sell_spot_market`).  
@@ -66,8 +65,8 @@
   - `record_hourly_funding_by_pair()` — records hourly funding APR snapshots in `historical_funding_rates_DB.json`.  
   - `average_funding_last_7_days()` — returns 7‑day average funding APR per pair from the JSON DB.  
   - `print_average_funding_last_7_days()` — logs the 7‑day average funding table to `delta_neutral.log`.  
-  - `funding_negative_last_hours()` — checks if average funding APR has been negative over the most‑recent *n* hours.  
   - `avg_funding_last_hours()` — computes mean funding APR over the most‑recent *n* hours.
+
 
 
 
