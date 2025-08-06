@@ -108,16 +108,7 @@ def get_funding_history(db_path, coin, days_interval=14):
     from hyperliquid.info import Info
     from hyperliquid.utils import constants
     """
-    Calculate total cross and add volume from Hyperliquid's info.user_fees JSON.
-
-    Args:
-        user_fees_json (dict): The JSON object returned from info.user_fees.
-
-    Returns:
-        dict: {
-            "total_cross": float,
-            "total_add": float
-        }
+    Retrieves funding historical data and put it in the db db_path
     """
     info = Info(constants.MAINNET_API_URL, skip_ws=True)
 
