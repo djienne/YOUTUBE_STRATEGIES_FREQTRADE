@@ -140,6 +140,78 @@ def get_funding_history(db_path, coin, days_interval=14):
 
     return True
 
+def funding_negative_last_Xhours(
+    pair: str,
+    printt = False,
+    nb_hours = 24,
+    file_path = None,
+    now_utc = None,
+) -> bool:
+    """
+    Return True if *pair* has a negative average funding APR over the
+    most‑recent nb_hours; False otherwise.
+
+    Parameters
+    ----------
+    pair      : str
+        The trading‑pair key in your JSON (e.g. "BTC/USDC:USDC").
+    file_path : str | Path | None, optional
+        Path to *funding_rates.json*.  Defaults to the same directory that
+        contains this source file.
+    now_utc   : datetime | None, optional
+        Override the "current time" (mainly for tests).  Defaults to utcnow().
+
+    Raises
+    ------
+    ValueError
+        If the JSON file contains no entries for *pair* in the last day.
+
+    Notes
+    -----
+    * Non‑numeric fields like "harvested_datetime" are ignored.
+    * If fewer than nb_hours hourly records exist (e.g. fresh database),
+      the function averages whatever data *is* present in that window.
+    """
+    # 1) resolve path
+    file_path = Path(file_path) if file_path else Path(__file__).resolve().parent / "historical_funding_rates_DB.json"
+    if not file_path.exists():
+        raise FileNotFoundError(file_path)
+
+    # 2) load JSON
+    db: dict[str, dict[str, float | str]] = json.loads(file_path.read_text())
+
+    # 3) time window
+    now_utc = now_utc or datetime.utcnow().replace(tzinfo=timezone.utc)
+    window_start = now_utc - timedelta(hours=nb_hours)
+
+    total, count = 0.0, 0
+
+    for ts_str, pairs in db.items():
+        # parse the timestamp key
+        try:
+            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        except ValueError:
+            continue                        # malformed → skip
+
+        if ts < window_start:               # outside last 24 h
+            continue
+
+        val = pairs.get(pair)
+        if isinstance(val, (int, float)):   # ignore metadata strings
+            total += float(val)
+            count += 1
+
+    if count == 0:
+        raise ValueError(f"No data for '{pair}' in the last 24 hours.")
+
+    avg = total / count
+    if printt:
+        mystr = " > 0" if avg>0 else " < 0"
+        write_log(f"Average Funding APR on {pair} over last {nb_hours} hours: {avg:.1f}" + mystr)
+    if avg < 0.0:
+        write_log(f"It was negative, position should be cut or prevented to open.")
+    return avg < 0.0
+
 def REBALANCE_PERP_SPOT():
     from hyperliquid.exchange import Exchange
     from hyperliquid.info import Info
@@ -760,13 +832,14 @@ class DELTA_NEUTRAL(IStrategy):
                 if self.config["runmode"].value in ('live'):
                     REBALANCE_PERP_SPOT()
 
-            open_spot_count = GET_NUMBER_SPOT_POSITION()
-
             write_log(f'Number of open perp positions: [{open_perp_count}]')
-            write_log(f"Number of open spot positions: [{open_spot_count}]")
 
-            if open_perp_count!=open_spot_count:
-                write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
+            if self.config["runmode"].value not in ('dry_run'):
+                open_spot_count = GET_NUMBER_SPOT_POSITION()
+                write_log(f"Number of open spot positions: [{open_spot_count}]")
+                if open_perp_count!=open_spot_count:
+                    write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
+                    sys.exit()
 
 
     def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
@@ -787,9 +860,11 @@ class DELTA_NEUTRAL(IStrategy):
 
             open_count = Trade.get_open_trade_count() # perp positions as freqtrade only manages perp positions here, spot position management is done with custom code.
 
-            open_spot_count = GET_NUMBER_SPOT_POSITION() # abort if the number of spot positions is not equal to the number of perp positions
-            if open_count != open_spot_count:
-                write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
+            if self.config["runmode"].value not in ('dry_run'):
+                open_spot_count = GET_NUMBER_SPOT_POSITION() # abort if the number of spot positions is not equal to the number of perp positions
+                if open_count != open_spot_count:
+                        write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
+                        sys.exit()
 
             nb_spot_position = GET_NUMBER_SPOT_POSITION()
 
@@ -1008,8 +1083,14 @@ class DELTA_NEUTRAL(IStrategy):
         write_log(f"Hours since open on {pair}: {(current_time - trade.open_date_utc).total_seconds()/3600:.2f} (limit to consider changing pair: {self.MINIMUM_TIME_TO_KEEP_POSITION_hour})")
         
         # Check if the minimum time for position has passed, and if there is a better opportunity
-        if (current_time - trade.open_date_utc).total_seconds()/3600 >= self.MINIMUM_TIME_TO_KEEP_POSITION_hour and self.PAIR_SHOULD_BE_REPLACED(pair):
+        min_holding_time_passed = (current_time - trade.open_date_utc).total_seconds()/3600 >= self.MINIMUM_TIME_TO_KEEP_POSITION_hour
+
+        if min_holding_time_passed and self.PAIR_SHOULD_BE_REPLACED(pair):
             return "timeout_and_better"
+
+        is_funding_negative_last_Xhours = funding_negative_last_Xhours(pair=pair, printt=True, nb_hours = 24)
+        if min_holding_time_passed and is_funding_negative_last_Xhours:
+            return "timeout_and_negative_fundings_avg24h" 
 
     def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: float,
                             proposed_stake: float, min_stake: float | None, max_stake: float,
