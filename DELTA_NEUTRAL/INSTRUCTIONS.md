@@ -12,7 +12,7 @@
     * logs specific to this Delta Neutral strategy are written in file `user_data\strategies\delta_neutral.log`
   * You can then ctrl-c and run `docker compose up -d` to have it running persistently in the background
   * To close all open positions (for debug, tests, or when you stop using the bot), put `FORCE_EXIT` in `DELTA_NEUTRAL.py` to `True` and restart (run `docker compose down` then `docker compose up`), it will cleanly and quickly close all delta neutral postions
-* Works on 2 maximum delta-neutral positions by default (ranked by funding rate with volume as tie-breaker), each using 1/2 of the available capital (perp+spot). To change from 2, adjust values of `MAX_POSITIONS` in `DELTA_NEUTRAL.py` AND `max_open_trades` in `config.json`. MORE THAN 3 POSITIONS IS NOT SUPPORTED (but easy to add).
+* Works on 2 maximum delta-neutral positions by default (ranked by funding rate with volume as tie-breaker), each using 1/2 of the available capital (perp+spot). To change from 2, adjust values of `MAX_POSITIONS` in `DELTA_NEUTRAL.py` AND `max_open_trades` in `config.json`. MORE THAN 3 POSITIONS IS NOT SUPPORTED AS IT IS (but easy to add).
 * Should be run on a dedicated Hyperliquid account without any open position on Perp or Spot. It is OK if there are some dusts on the Spot; this bot will also create dust.
 * Supported coins are the ones in the whitelist of `config.json` file, do not add new coins without changing the code of `get_coin_info()` in `DELTA_NEUTRAL.py`.
 * Overall Profit&loss of the strategy should be tracked by looking at the Hyperliquid account total perp+spot balance (under "portfolio" section -> "Total Equity"). Freqtrade will only give Short positions' Profit&loss including fundings.
@@ -66,6 +66,7 @@
   - `average_funding_last_7_days()` — returns 7‑day average funding APR per pair from the JSON DB.  
   - `print_average_funding_last_7_days()` — logs the 7‑day average funding table to `delta_neutral.log`.  
   - `avg_funding_last_hours()` — computes mean funding APR over the most‑recent *n* hours.
+
 
 
 
