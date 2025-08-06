@@ -29,30 +29,30 @@
 - **Position management**  
   - Automatically rebalances perp and spot accounts USDC amounts for ~50/50
   - **Maximum:** uses `MAX_POSITIONS = 2` pairs at the same time ("position slots"). Can be changed by editing both `max_open_trades` in `config.json` and `MAX_POSITIONS` in `DELTA_NEUTRAL.py`.
-  - **Minimum holding time:** `MINIMUM_TIME_FOR_POSITION_HOUR` is set to 120 (5 days), the minimum holding time, enough to offset opening + closing fees. This is a wild guess, did not test it or optimize anything.
+  - **Minimum holding time:** `MINIMUM_TIME_FOR_POSITION_HOUR` is set to 720 hours (30 days), the minimum holding time, enough to be sure to offset opening + closing fees and make some profits. This is a wild guess, make your own tests.
   - **Exit triggers for a given pair position:**  
     - a clearly better funding/volume pair appears after the minimum holding time (`MINIMUM_TIME_FOR_POSITION_HOUR`)  
     - short's profit > 50 % or loss < −50 %, will trigger a rebalance to always stay far from liquidation.
 
 - **Pair selection**  
   1. Filter for **funding APR ≥ 10 %** and **quote volume ≥ 2.5 M USDC**.  
-  2. Rank descending by funding, then volume (`select_BEST_PAIRS`).  
+  2. Rank descending by funding, then volume (using function `select_BEST_PAIRS`).  
   3. Open a position if the pair is in the TOP‑K list and not already held.
 
 - **Capital & risk**  
   - **Hard stop‑loss:** −90 % (effectively disabled).  
   - **ROI limit:** 5000 % (effectively disabled).  
-  - **Leverage:** fixed at `1` (no leverage). Should never be changed. Code may be updated in the future to have leverage, but not sure the risk/reward is worth it.
+  - **Leverage:** fixed at `1` (no leverage). Should never be changed. Code may be updated in the future to have leverage, but not sure if the risk/reward is worth it.
 
 - **Cadence:** `timeframe = '1m'`  
-  - Evaluates and acts every minute (as soon as possible for freqtrade).
+  - Evaluates and acts about every minute (as soon as possible for freqtrade).
 
-- **Main loop (`bot_loop_start`)**  
+- **Main loop start (`bot_loop_start`)**  
   - Sanity checks, updates funding data, volumes, and active positions each cycle, with logs.  
   - Periodically logs top pairs.
 
 - **Real order handling**  
-  - In `live` mode, places spot legs via Hyperliquid API (`HL_buy_spot_market` / `HL_sell_spot_market`).  
+  - In `live` mode, places spot legs via Hyperliquid python SDK API (`HL_buy_spot_market` / `HL_sell_spot_market`).  
   - In `dry_run`, simulates without sending spot orders. `dry_run` is not very usefull as it is now.
 
 - **Utility functions**  
@@ -61,11 +61,13 @@
   - `_get_spot_price()` — fetches the current mid‑price for a given coin via Hyperliquid’s REST API.  
   - `get_coin_info()` — supplies tick sizes, decimal precision and spot‑pair symbol for each supported coin.  
   - `HL_buy_spot_market()` — places a market buy on Hyperliquid spot, adjusting size for dust and adding a 0.05 % buffer.  
-  - `HL_sell_spot_market()` — liquidates the full spot position with an IOC limit order 5 % below last price.  
+  - `HL_sell_spot_market()` — liquidates the full spot position with an IOC limit order 5 % below last price.
+  - `get_funding_history()` — Retrieves funding historical data and put it in the db db_path
   - `record_hourly_funding_by_pair()` — records hourly funding APR snapshots in `historical_funding_rates_DB.json`.  
   - `average_funding_last_7_days()` — returns 7‑day average funding APR per pair from the JSON DB.  
   - `print_average_funding_last_7_days()` — logs the 7‑day average funding table to `delta_neutral.log`.  
   - `avg_funding_last_hours()` — computes mean funding APR over the most‑recent *n* hours.
+
 
 
 
