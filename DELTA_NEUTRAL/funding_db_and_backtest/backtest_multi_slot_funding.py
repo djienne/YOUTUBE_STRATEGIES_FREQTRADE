@@ -136,6 +136,7 @@ class BacktestParams:
     quote_key: str = "USDC"
     settle_key: str = "USDC"
     apply_final_close_fee: bool = False  # if True, close open trades at the very end with a fee
+    funding_efficiency: float = 0.5  # NEW: Only 50% of capital earns funding rate (due to hedging)
 
 @dataclass
 class BacktestResult:
@@ -152,9 +153,15 @@ class BacktestResult:
     per_slot_trades: Dict[int, pd.DataFrame]
     equity_curve: Optional[pd.DataFrame] = None  # columns: ['timestamp','equity']
 
-def annualized_pct_to_hourly_fraction(ann_pct: float) -> float:
-    """Convert annualized percent to hourly fraction."""
-    return (ann_pct / 100.0) / (365.0 * 24.0)
+def annualized_pct_to_hourly_fraction(ann_pct: float, funding_efficiency: float = 0.5) -> float:
+    """
+    Convert annualized percent to hourly fraction, accounting for funding efficiency.
+    
+    Args:
+        ann_pct: Annualized funding rate percentage
+        funding_efficiency: Fraction of capital that actually earns funding rate (default 0.5 for hedged strategy)
+    """
+    return (ann_pct / 100.0) / (365.0 * 24.0) * funding_efficiency
 
 def rank_top_n(ann_by_coin: Dict[str, Optional[float]], n: int) -> List[str]:
     """
@@ -221,7 +228,8 @@ def backtest_multi_slot(
         for s in slots:
             if s.coin is not None:
                 ann_pct = ann_by_coin.get(s.coin)
-                hourly = annualized_pct_to_hourly_fraction(ann_pct) if ann_pct is not None else 0.0
+                # UPDATED: Apply funding efficiency (only 50% of capital earns funding rate)
+                hourly = annualized_pct_to_hourly_fraction(ann_pct, params.funding_efficiency) if ann_pct is not None else 0.0
                 s.equity *= (1.0 + hourly)
                 s.hours_held += 1
 
@@ -376,7 +384,7 @@ def backtest_multi_slot(
 # Example usage
 # ----------------------------
 if __name__ == "__main__":
-    db_path = "funding_db_for_backtest.json"   # <- path to your DB
+    db_path = "funding_db_test.json"   # <- path to your DB
     coins = ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"]
 
     params = BacktestParams(
@@ -385,7 +393,8 @@ if __name__ == "__main__":
         min_hold_days=30,
         open_fee_rate=0.0006,
         close_fee_rate=0.0006,
-        apply_final_close_fee=False  # set True if you want to force-close at end
+        apply_final_close_fee=False,  # set True if you want to force-close at end
+        funding_efficiency=0.5        # NEW: 50% capital efficiency for hedged strategy
     )
 
     res = backtest_multi_slot(
@@ -407,6 +416,7 @@ if __name__ == "__main__":
         "annualized_return_pct": res.annualized_return_pct,
         "total_switches": res.total_switches,
         "avg_hold_days": res.avg_hold_days,
+        "funding_efficiency": params.funding_efficiency,  # NEW: Show efficiency in output
     }
     for k, v in summary.items():
         print(f"{k:22s} {v}")
@@ -422,6 +432,9 @@ if __name__ == "__main__":
         else:
             print(df_trades.to_string(index=False))
 
+    print(f"\n=== Note: Results account for {params.funding_efficiency*100}% capital efficiency ===")
+    print("This reflects that in a hedged funding rate strategy, only the perpetual position")
+    print("earns funding rates while the spot hedge position does not.")
 
     ## Run on a grid of # of slots and # of minimum holding days
     results_grid = []
@@ -434,7 +447,8 @@ if __name__ == "__main__":
                 min_hold_days=min_hold,
                 open_fee_rate=0.0006,
                 close_fee_rate=0.0006,
-                apply_final_close_fee=False
+                apply_final_close_fee=False,
+                funding_efficiency=0.5  # NEW: 50% efficiency
             )
             res = backtest_multi_slot(
                 db_path=db_path,
@@ -465,7 +479,6 @@ if __name__ == "__main__":
     print("\nTop 15 parameter sets by Option C score:")
     print(df_scored[["slots","min_hold_days","annualized_return_pct","total_return_pct","score_c"]].head(15).to_string(index=False))
 
-
     # Pivot table for heatmap
     pivot = df_grid.pivot(index="slots", columns="min_hold_days", values="annualized_return_pct")
 
@@ -478,9 +491,7 @@ if __name__ == "__main__":
     plt.yticks(ticks=range(len(pivot.index)), labels=pivot.index)
     plt.xlabel("Minimum Holding Days")
     plt.ylabel("Number of Slots")
-    plt.title("Annualized Return Heatmap (slots vs min_hold_days)")
+    plt.title("Annualized Return Heatmap (slots vs min_hold_days) - 50% Capital Efficiency")
 
     plt.tight_layout()
     plt.show()
-
-
