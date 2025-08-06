@@ -956,7 +956,7 @@ class DELTA_NEUTRAL(IStrategy):
                 self.FUNDINGS[cPAIR] = funding_val_avg
                 self.QUOTE_VOLUMES[cPAIR] = vol
             else:
-                write_log(f"{cPAIR} is rejected because of low Funding APR [{funding_val_avg:.1f}], or low volume [{vol:.1f}], or funding APR has been on average negative recently.")
+                write_log(f"{cPAIR} is rejected because of low Funding APR [{funding_val_avg:.1f}], or low volume [{vol:.1f}].")
 
             if not self.has_looped_once:
                 df['entry_signal'] = 0
@@ -964,7 +964,7 @@ class DELTA_NEUTRAL(IStrategy):
                 self.BEST_PAIRS = self.select_BEST_PAIRS(self.QUOTE_VOLUMES, self.FUNDINGS, self.MAX_POSITIONS)
                 # Signal to open short if:
                 # 1. We have fewer than max positions open
-                # 2. bot has already done one loop, i.e. we are in loop #2 or more (i.e. we have already grathered fundings for all pairs)
+                # 2. bot has already done one loop, i.e. we are in loop #2 or more (i.e. we have already grathered current fundings for all pairs)
                 # 3. Current pair is in best pairs
                 # 4. Current pair is not already open
                 if (open_count < self.MAX_POSITIONS and 
@@ -998,8 +998,6 @@ class DELTA_NEUTRAL(IStrategy):
             if self.FORCE_EXIT: # used for debug only
                 dataframe.loc[:, 'exit_short'] = 1
                 return dataframe
-            
-            dataframe.loc[dataframe['exit_signal'] == 1, 'exit_short'] = 1
 
             return dataframe
 
