@@ -17,9 +17,9 @@
 * Supported coins are the ones in the whitelist of `config.json` file, do not add new coins without changing the code of `get_coin_info()` in `DELTA_NEUTRAL.py`.
 * Overall Profit&loss of the strategy should be tracked by looking at the Hyperliquid account total perp+spot balance (under "portfolio" section -> "Total Equity"). Freqtrade will only give Short positions' Profit&loss including fundings.
 
-* To support this project, you can use my referral link for hyperliquid: [https://app.hyperliquid.xyz/join/FREQTRADE](https://app.hyperliquid.xyz/join/FREQTRADE)
-* There is an alternative project to do Delta-Neutral funding farming on Hyperliquid called **Liminal**: [https://liminal.money/join/FREQTRADE](https://liminal.money/join/FREQTRADE)
-   * (caveats are: limited pool sizes, minimum of 500 USDC, running on someone else's account if you didn't do at least 100k volume on Hyperliquid) 
+* To support this project, you can use my referral link for **Hyperliquid**: [https://app.hyperliquid.xyz/join/FREQTRADE](https://app.hyperliquid.xyz/join/FREQTRADE)
+* There is an alternative project to do Delta-Neutral funding farming on **Hyperliquid** called **Liminal**: [https://liminal.money/join/FREQTRADE](https://liminal.money/join/FREQTRADE)
+   * (caveats of **Liminal** are: limited pool sizes, minimum of 500 USDC deposit, no rebalancing to better coins, running on someone else's account if you didn't do at least 100k volume on Hyperliquid) 
 
 # DELTA_NEUTRAL Hyperliquid Freqtrade – quick overview
 
@@ -68,6 +68,7 @@
   - `print_average_funding_last_7_days()` — logs the 7‑day average funding table to `delta_neutral.log`.  
   - `funding_negative_last_hours()` — checks if average funding APR has been negative over the most‑recent *n* hours.  
   - `avg_funding_last_hours()` — computes mean funding APR over the most‑recent *n* hours.
+
 
 
 
