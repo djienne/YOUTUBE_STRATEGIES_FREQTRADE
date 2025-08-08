@@ -812,13 +812,14 @@ class DELTA_NEUTRAL(IStrategy):
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
         """
         write_log("NEW START")
+        self.has_looped_once = False
         if self.config["runmode"].value in ('live', 'dry_run'):
-
+            
             # retrive historical fundings for the last 30 days and update the funding database (in case there would be missing data)
             write_log("Updating fundings database historical_funding_rates_DB.json with historical data from API.")
             here = Path(__file__).resolve().parent
             db_path = here / "historical_funding_rates_DB.json"
-            get_funding_history(db_path,"BTC",8)
+            get_funding_history(db_path,"BTC",8) # 8 days
             get_funding_history(db_path,"ETH",8)
             get_funding_history(db_path,"SOL",8)
             get_funding_history(db_path,"HYPE",8)
@@ -827,12 +828,7 @@ class DELTA_NEUTRAL(IStrategy):
             get_funding_history(db_path,"PURR",8)
             write_log("Done updating fundings database.")
 
-            self.has_looped_once = False
             open_perp_count = Trade.get_open_trade_count() # freqtrade only manages perp positions here, spot position management is done with custom code.
-            if open_perp_count == 0:
-                if self.config["runmode"].value in ('live'):
-                    REBALANCE_PERP_SPOT()
-
             write_log(f'Number of open perp positions: [{open_perp_count}]')
 
             if self.config["runmode"].value not in ('dry_run'):
@@ -841,7 +837,10 @@ class DELTA_NEUTRAL(IStrategy):
                 if open_perp_count!=open_spot_count:
                     write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
                     sys.exit()
-
+            
+            if open_perp_count!=self.MAX_POSITIONS:
+                if self.config["runmode"].value in ('live'):
+                    REBALANCE_PERP_SPOT()
 
     def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
         """
@@ -1158,4 +1157,5 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
+
 
