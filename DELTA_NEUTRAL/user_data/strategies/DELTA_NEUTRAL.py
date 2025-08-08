@@ -464,8 +464,8 @@ def HL_buy_spot_market(coin, spot_size):
                 filled = status["filled"]
                 write_log(f'Order #{filled["oid"]} filled {filled["totalSz"]} @{filled["avgPx"]}')
                 return True
-            except KeyError:
-                write_log(f'Error: {status["error"]}')
+            except Exception as e:
+                write_log(f'Error: {e}')
                 return False
     else:
         write_log(spot_order_result)
@@ -715,6 +715,7 @@ class DELTA_NEUTRAL(IStrategy):
     BEST_PAIRS = []  # list of best pairs
     CURRENT_POSITION_PAIRS = []  # list
     order_just_filled = False
+    rebalancing_done = True
 
     # DEBUG PARAMETERS
     FORCE_EXIT = False # for debug only, forces exit of delta neutral position (To close an open position (debug, tests), put FORCE_EXIT to `True` and restart [commands `docker compose down` then `docker compose up`])
@@ -860,33 +861,25 @@ class DELTA_NEUTRAL(IStrategy):
 
             open_count = Trade.get_open_trade_count() # perp positions as freqtrade only manages perp positions here, spot position management is done with custom code.
 
+            nb_spot_position = GET_NUMBER_SPOT_POSITION()
+
             if self.config["runmode"].value not in ('dry_run'):
-                open_spot_count = GET_NUMBER_SPOT_POSITION() # abort if the number of spot positions is not equal to the number of perp positions
-                if open_count != open_spot_count:
+                if open_count != nb_spot_position:
                         write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
                         sys.exit()
 
-            nb_spot_position = GET_NUMBER_SPOT_POSITION()
-
+             # rebalance to have 50/50 perp/spot USDC repartition  if several conditions are met
             if self.order_just_filled:
                 self.order_just_filled = False
-                if open_count==nb_spot_position:
+                if open_count!=self.MAX_POSITIONS and open_count==nb_spot_position:
                     try: 
-                        if self.config["runmode"].value in ('live'):
+                        if self.config["runmode"].value in ('live') and not self.rebalancing_done:
                             REBALANCE_PERP_SPOT()
+                            self.rebalancing_done = True
                     except Exception as e: # abort if failed to rebalance
                         write_log(f'There was an error while rebalancing perp and spot accounts. ABORTING.')
                         write_log(str(e))
                         sys.exit()
-
-            if open_count < self.MAX_POSITIONS and open_count==nb_spot_position: # rebalance to have 50/50 perp/spot USDC repartition 
-                try:                      
-                    if self.config["runmode"].value in ('live'):
-                        REBALANCE_PERP_SPOT()
-                except Exception as e: # abort if failed to rebalance
-                    write_log(f'There was an error while rebalancing perp and spot accounts. ABORTING.')
-                    write_log(str(e))
-                    sys.exit()
 
             if open_count == 0:
                 self.CURRENT_POSITION_PAIRS = []
@@ -1035,7 +1028,7 @@ class DELTA_NEUTRAL(IStrategy):
             if pair not in self.CURRENT_POSITION_PAIRS:
                 self.CURRENT_POSITION_PAIRS.append(pair)
             
-            return is_OK
+        return is_OK
 
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, exit_reason: str,
@@ -1068,7 +1061,7 @@ class DELTA_NEUTRAL(IStrategy):
             if pair in self.CURRENT_POSITION_PAIRS:
                 self.CURRENT_POSITION_PAIRS.remove(pair)
 
-            return is_OK
+        return is_OK
 
     def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs):
@@ -1148,10 +1141,12 @@ class DELTA_NEUTRAL(IStrategy):
             return None
         # Trigger a spot/perp rebalance to 50/50 after any order fill
         time.sleep(3.0) # wait for 3 seconds just in case to make sure both spot and perp orders were filled
+        self.rebalancing_done = False
         open_count = Trade.get_open_trade_count() # (number of perp positions)
         nb_spot_position = GET_NUMBER_SPOT_POSITION()
-        if open_count==nb_spot_position:
+        if open_count==nb_spot_position and open_count!=self.MAX_POSITIONS:
             REBALANCE_PERP_SPOT()
+            self.rebalancing_done = True
         else:
             write_log("WARNING: in order_filled, the number of spot and perp positions should be equal. Will also try later to rebalance.")
         self.order_just_filled = True
