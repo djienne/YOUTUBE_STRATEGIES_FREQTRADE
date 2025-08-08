@@ -1147,7 +1147,7 @@ class DELTA_NEUTRAL(IStrategy):
         if open_count==nb_spot_position and open_count!=self.MAX_POSITIONS:
             REBALANCE_PERP_SPOT()
             self.rebalancing_done = True
-        else:
+        if open_count!=nb_spot_position:
             write_log("WARNING: in order_filled, the number of spot and perp positions should be equal. Will also try later to rebalance.")
         self.order_just_filled = True
         return None
@@ -1158,3 +1158,4 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
+
