@@ -17,6 +17,7 @@ from typing import Union
 
 logger = logging.getLogger(__name__)
 
+# Do not touch these 3, will be updated by the code
 GLOBAL_ADDRESS = None
 PRIVATE_HL = None
 PRIVATE_EVM_WALLET = None
@@ -1316,3 +1317,4 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
+
