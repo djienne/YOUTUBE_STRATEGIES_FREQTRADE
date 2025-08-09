@@ -17,6 +17,10 @@ from typing import Union
 
 logger = logging.getLogger(__name__)
 
+GLOBAL_ADDRESS = None
+PRIVATE_HL = None
+PRIVATE_EVM_WALLET = None
+
 def write_log(message):
     """
     Writes a log message to the log file delta_neutral.log.
@@ -219,6 +223,8 @@ def REBALANCE_PERP_SPOT():
     import eth_account
     from eth_account.signers.local import LocalAccount
     import math
+    global GLOBAL_ADDRESS
+    global PRIVATE_EVM_WALLET
 
     def _get_spot_account_available_USDC(info, address):
         spot_user_state = info.spot_user_state(address)
@@ -233,20 +239,21 @@ def REBALANCE_PERP_SPOT():
         total_account_balance = float(user_state['marginSummary'].get('accountValue', 0))
         return account_balance_available, total_account_balance
     
-    config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
-    ex = config.get("exchange", {})
-    address = ex.get("walletAddress")
-    private_key    = ex.get("privateKeyEthWallet")
+    if GLOBAL_ADDRESS is None or PRIVATE_EVM_WALLET is None:
+        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
+        ex = config.get("exchange", {})
+        GLOBAL_ADDRESS = ex.get("walletAddress")
+        PRIVATE_EVM_WALLET  = ex.get("privateKeyEthWallet")
 
     # Initialize exchange
-    account: LocalAccount = eth_account.Account.from_key(private_key)
-    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=address)
+    account: LocalAccount = eth_account.Account.from_key(PRIVATE_EVM_WALLET)
+    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=GLOBAL_ADDRESS)
 
     # Fetch spot metadata
     info = Info(constants.MAINNET_API_URL, skip_ws=True)
 
-    spot_usdc_available = _get_spot_account_available_USDC(info, address)
-    perp_usdc_available, _ = _get_perp_account_available_USDC(info, address)
+    spot_usdc_available = _get_spot_account_available_USDC(info, GLOBAL_ADDRESS)
+    perp_usdc_available, _ = _get_perp_account_available_USDC(info, GLOBAL_ADDRESS)
 
     amt_avilable_total = spot_usdc_available + perp_usdc_available
     target_each = amt_avilable_total / 2.0
@@ -303,6 +310,7 @@ def _get_spot_price(coin_name):
 def GET_NUMBER_SPOT_POSITION():
     from hyperliquid.info import Info
     from hyperliquid.utils import constants
+    global GLOBAL_ADDRESS
 
     def count_spot_position(info, address):
         # Fetch spot metadata
@@ -310,17 +318,18 @@ def GET_NUMBER_SPOT_POSITION():
         #print(spot_user_state)
         count = sum(
             1 for item in spot_user_state['balances']
-            if item['coin'] != 'USDC' and float(item['entryNtl']) > 11
+            if item['coin'] != 'USDC' and float(item['entryNtl']) > 10
         )
         return count
 
-    config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
-    ex = config.get("exchange", {})
-    
-    address = ex.get("walletAddress")
+    if GLOBAL_ADDRESS is None:
+        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
+        ex = config.get("exchange", {})
+        GLOBAL_ADDRESS = ex.get("walletAddress")
+
     info = Info(constants.MAINNET_API_URL, skip_ws=True)
 
-    return count_spot_position(info, address)
+    return count_spot_position(info, GLOBAL_ADDRESS)
 
 def get_coin_info(coin):
     
@@ -402,14 +411,191 @@ def get_coin_info(coin):
         case _:
             raise ValueError(f"{coin} is unsupported coin")
 
+def get_account_total_equity():
+    from hyperliquid.exchange import Exchange
+    from hyperliquid.info import Info
+    from hyperliquid.utils import constants
+    import eth_account
+    from eth_account.signers.local import LocalAccount
+    import math
+    global GLOBAL_ADDRESS
+
+    def get_spot_token_price_usdc(token_symbol: str) -> float:
+        """
+        Get the price of a spot token in USDC using Hyperliquid SDK
+        
+        Args:
+            token_symbol: The token symbol (e.g., 'UETH', 'UFART', 'BTC', 'ETH', etc.)
+                        Can also handle numerical IDs like '@1', '@100', etc.
+        
+        Returns:
+            Price in USDC as float
+        """
+
+        # Initialize the Info client
+        info = Info(constants.MAINNET_API_URL, skip_ws=True)
+
+        if token_symbol=='UFART':
+            token_symbol='FARTCOIN'
+        elif token_symbol=='UBTC':
+            token_symbol='BTC'
+        elif token_symbol=='UETH':
+            token_symbol='ETH'
+        elif token_symbol=='USOL':
+            token_symbol='SOL'
+        elif token_symbol=='PURR':
+            token_symbol='PURR'
+        elif token_symbol=='HYPE':
+            token_symbol='HYPE'
+        elif token_symbol=='UPUMP':
+            token_symbol='PUMP'
+        
+        # Get all mids (market prices) for all actively traded coins
+        all_mids = info.all_mids()
+        
+        # Find the price for the specific token
+        if token_symbol in all_mids:
+            price = float(all_mids[token_symbol])
+            return price
+        else:
+            return 0.0
+
+    def sum_entry_ntl_and_usdc_total(data):
+        from decimal import Decimal, InvalidOperation
+
+        total = 0.0
+
+        balances = data.get("balances", [])
+        for b in balances:
+            try:
+                # Sum all entryNtl values
+                # print(b.get("coin", "0"))
+                # print(b.get("total", "0"))
+                if b.get("coin", "0")!='USDC':
+                    total += float(b.get("total", "0"))*float(get_spot_token_price_usdc(b.get("coin", "0")))
+                else:
+                    total += float(b.get("total", "0"))
+            except (InvalidOperation, TypeError):
+                pass
+
+        return float(total)
+
+    if GLOBAL_ADDRESS is None:
+        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
+        ex = config.get("exchange", {}) 
+        GLOBAL_ADDRESS = ex.get("walletAddress")
+
+    info = Info(constants.MAINNET_API_URL, skip_ws=True)
+
+    perp_user_state = info.user_state(GLOBAL_ADDRESS)
+    spot_user_state = info.spot_user_state(GLOBAL_ADDRESS)
+
+    perp_account = float(perp_user_state['marginSummary']['accountValue'])
+    spot_account = sum_entry_ntl_and_usdc_total(spot_user_state)
+    return perp_account+spot_account
+
+def log_equity(
+    total_equity: float,
+    min_interval_minutes: int = 59,
+):
+    """
+    Logs `total_equity` for `address` to CSV, with abs/rel change vs first recorded value.
+    Appends only if last row is older than `min_interval_minutes`.
+
+    CSV columns:
+      timestamp, total_equity_usdc, abs_change_from_first, rel_change_from_first
+    """
+
+    # --- imports inside for easy copy/paste ---
+    from datetime import datetime, timezone
+    from decimal import Decimal, InvalidOperation
+    import csv, os
+    from typing import Optional
+
+    def _now_utc() -> datetime:
+        return datetime.now(timezone.utc)
+
+    def _read_last_timestamp(csv_path: str) -> Optional[datetime]:
+        if not os.path.exists(csv_path):
+            return None
+        with open(csv_path, "rb") as f:
+            try:
+                f.seek(-2, os.SEEK_END)
+                while f.read(1) != b"\n":
+                    f.seek(-2, os.SEEK_CUR)
+            except OSError:
+                f.seek(0)
+            last_line = f.readline().decode("utf-8").strip()
+        if not last_line or last_line.startswith("timestamp"):
+            return None
+        try:
+            return datetime.fromisoformat(last_line.split(",")[0])
+        except ValueError:
+            return None
+
+    def _read_first_total(csv_path: str) -> Optional[Decimal]:
+        if not os.path.exists(csv_path):
+            return None
+        with open(csv_path, newline="") as f:
+            r = csv.reader(f)
+            try:
+                _ = next(f)
+            except StopIteration:
+                return None
+            for row in r:
+                if not row or row[0].strip().lower() == "timestamp":
+                    continue
+                if len(row) >= 2 and row[1].strip():
+                    try:
+                        return Decimal(row[1].strip())
+                    except InvalidOperation:
+                        return None
+                break
+        return None
+
+    def _write_sample(csv_path: str, when: datetime, equity: Decimal, first_total: Optional[Decimal]) -> None:
+        file_exists = os.path.exists(csv_path)
+        abs_change, rel_change = "", ""
+        if first_total is not None:
+            try:
+                abs_change_val = equity - first_total
+                abs_change = str(abs_change_val)
+                if first_total != 0:
+                    rel_change = str((equity / first_total) - Decimal("1"))
+            except InvalidOperation:
+                pass
+        with open(csv_path, "a", newline="") as f:
+            w = csv.writer(f)
+            if not file_exists:
+                w.writerow([
+                    "timestamp",
+                    "total_equity_usdc",
+                    "abs_change_from_first",
+                    "rel_change_from_first"
+                ])
+            w.writerow([when.isoformat(), str(equity), abs_change, rel_change])
+
+    # Build file path
+    filename = f"equity_track.csv"
+    here = Path(__file__).resolve().parent
+    csv_path = os.path.join(here, filename)
+
+    # Decide whether to append
+    when = _now_utc()
+    last_ts = _read_last_timestamp(csv_path)
+    if last_ts is None or (when - last_ts).total_seconds() >= min_interval_minutes * 60:
+        equity_decimal = Decimal(str(total_equity))
+        first_total = _read_first_total(csv_path)
+        _write_sample(csv_path, when, equity_decimal, first_total)
+
 def HL_buy_spot_market(coin, spot_size):
     from hyperliquid.exchange import Exchange
     from hyperliquid.info import Info
     from hyperliquid.utils import constants
     import eth_account
     from eth_account.signers.local import LocalAccount
-    import os
-    import math
+    global GLOBAL_ADDRESS
+    global PRIVATE_HL
 
     def get_spot_position_size(info, address, wanted_coin_name):
         if wanted_coin_name=='PUMP':
@@ -436,20 +622,21 @@ def HL_buy_spot_market(coin, spot_size):
     coin_info = get_coin_info(coin)
     HL_spot_pair = coin_info['HL_spot_pair']
     size_decimal_digits = coin_info['size_decimal_digits']
-    price_decimal_digits = coin_info['price_decimal_digits']
+    # price_decimal_digits = coin_info['price_decimal_digits']
 
-    config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
-    ex = config.get("exchange", {}) 
-    address = ex.get("walletAddress")
-    private_key    = ex.get("privateKey")
-
-    account: LocalAccount = eth_account.Account.from_key(private_key)
-    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=address)
+    if GLOBAL_ADDRESS is None or PRIVATE_HL is None:
+        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
+        ex = config.get("exchange", {})
+        GLOBAL_ADDRESS = ex.get("walletAddress")
+        PRIVATE_HL    = ex.get("privateKey")
+        
+    account: LocalAccount = eth_account.Account.from_key(PRIVATE_HL)
+    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=GLOBAL_ADDRESS)
     info = Info(constants.MAINNET_API_URL, skip_ws=True)
     #last_price = _get_spot_price(coin)
     rounded_spot_buy_size = floor_to_n_digits(spot_size, size_decimal_digits)
     write_log(rounded_spot_buy_size)
-    spot_size_DUST = get_spot_position_size(info, address, coin) # if there is already a dust
+    spot_size_DUST = get_spot_position_size(info, GLOBAL_ADDRESS, coin) # if there is already a dust
     write_log(spot_size_DUST)
     rounded_spot_buy_size = round_to_n_digits(rounded_spot_buy_size-spot_size_DUST, size_decimal_digits) 
     write_log(rounded_spot_buy_size)
@@ -477,8 +664,8 @@ def HL_sell_spot_market(coin):
     from hyperliquid.utils import constants
     import eth_account
     from eth_account.signers.local import LocalAccount
-    import os
-    import math
+    global GLOBAL_ADDRESS
+    global PRIVATE_HL
     
     def get_spot_position_size(info, address, wanted_coin_name):
         if wanted_coin_name=='PUMP':
@@ -502,17 +689,17 @@ def HL_sell_spot_market(coin):
     size_decimal_digits = coin_info['size_decimal_digits']
     price_decimal_digits = coin_info['price_decimal_digits']
 
-    # Load credentials from environment variables
-    config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
-    ex = config.get("exchange", {})
-    address = ex.get("walletAddress")
-    private_key    = ex.get("privateKey")
+    if GLOBAL_ADDRESS is None or PRIVATE_HL is None:
+        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
+        ex = config.get("exchange", {})
+        GLOBAL_ADDRESS = ex.get("walletAddress")
+        PRIVATE_HL    = ex.get("privateKey")
 
-    account: LocalAccount = eth_account.Account.from_key(private_key)
-    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=address)
+    account: LocalAccount = eth_account.Account.from_key(PRIVATE_HL)
+    exchange = Exchange(account, constants.MAINNET_API_URL, account_address=GLOBAL_ADDRESS)
     info = Info(constants.MAINNET_API_URL, skip_ws=True)
 
-    spot_size = get_spot_position_size(info, address, coin)
+    spot_size = get_spot_position_size(info, GLOBAL_ADDRESS, coin)
     last_price = _get_spot_price(coin)
 
     rounded_spot_sell_size = round_to_n_digits(spot_size, size_decimal_digits)
@@ -777,35 +964,6 @@ class DELTA_NEUTRAL(IStrategy):
         
         return best_funding > current_funding
 
-    def GET_AVAILABLE_PERP(self):
-        from hyperliquid.exchange import Exchange
-        from hyperliquid.info import Info
-        from hyperliquid.utils import constants
-        import eth_account
-        from eth_account.signers.local import LocalAccount
-
-        def _get_perp_account_available_USDC(info, address):
-            user_state = info.user_state(address)
-            perp_user_state = account_balance_available = float(user_state['crossMarginSummary'].get('accountValue', 0))
-            total_account_balance = float(user_state['marginSummary'].get('accountValue', 0))
-            return account_balance_available, total_account_balance
-        
-        config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
-        ex = config.get("exchange", {})
-        address = ex.get("walletAddress")
-        private_key    = ex.get("privateKeyEthWallet")
-
-        # Initialize exchange
-        account: LocalAccount = eth_account.Account.from_key(private_key)
-        exchange = Exchange(account, constants.MAINNET_API_URL, account_address=address)
-
-        # Fetch spot metadata
-        info = Info(constants.MAINNET_API_URL, skip_ws=True)
-
-        perp_usdc_available, _ = _get_perp_account_available_USDC(info, address)
-
-        return perp_usdc_available
-
     def bot_start(self, **kwargs) -> None:
         """
         Called only once after bot instantiation.
@@ -842,6 +1000,7 @@ class DELTA_NEUTRAL(IStrategy):
                 if self.config["runmode"].value in ('live'):
                     REBALANCE_PERP_SPOT()
 
+
     def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
         """
         Called at the start of the bot iteration (one loop). For each loop, it will run populate_indicators on all pairs.
@@ -853,6 +1012,8 @@ class DELTA_NEUTRAL(IStrategy):
 
         if self.config["runmode"].value in ('live', 'dry_run'):
             write_log(f'Loop #{self.nb_loop}')
+
+            log_equity(get_account_total_equity())
 
             if self.nb_loop>=2:
                 self.has_looped_once = True
@@ -1086,7 +1247,6 @@ class DELTA_NEUTRAL(IStrategy):
                             proposed_stake: float, min_stake: float | None, max_stake: float,
                             leverage: float, entry_tag: str | None, side: str,
                             **kwargs) -> float:
-        # max_stake and self.GET_AVAILABLE_PERP() give the same thing: USDC amount available for trade in the hyperliquid perp account
         # self.wallets.get_total_stake_amount() gives the "available_capital" in the config.json
         open_count = Trade.get_open_trade_count()
 
@@ -1117,7 +1277,6 @@ class DELTA_NEUTRAL(IStrategy):
             write_log("ERROR: Leverage must be 1. Something went wrong. ABORTING.")
             sys.exit()
         #write_log(f"self.wallets.get_total_stake_amount() : {self.wallets.get_total_stake_amount()}")
-        #write_log(f"self.GET_AVAILABLE_PERP() : {self.GET_AVAILABLE_PERP()}")
         #write_log(f"max_stake : {max_stake}")
         #self.config["max_open_trades"]
         #self.config["stake_amount"]
@@ -1157,5 +1316,3 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
-
-
