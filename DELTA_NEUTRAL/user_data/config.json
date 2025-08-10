@@ -6,7 +6,7 @@
     "amount_reserve_percent": 0.01,
     "available_capital": 200000.0,
     "dry_run_wallet": 200000.0,
-    "dry_run": true,
+    "dry_run": false,
     "fee": 0.001,
     "cancel_open_orders_on_exit": true,
     "trading_mode": "futures",
@@ -105,4 +105,5 @@
     "internals": {
         "process_throttle_secs": 30
     }
+
 }
