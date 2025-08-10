@@ -17,7 +17,6 @@ from typing import Union
 
 logger = logging.getLogger(__name__)
 
-# Do not touch these 3, will be updated by the code
 GLOBAL_ADDRESS = None
 PRIVATE_HL = None
 PRIVATE_EVM_WALLET = None
@@ -332,82 +331,95 @@ def GET_NUMBER_SPOT_POSITION():
 
     return count_spot_position(info, GLOBAL_ADDRESS)
 
-def get_coin_info(coin):
+def get_token_decimals(token_name):
+    """
+    Returns szDecimals and weiDecimals for the given token name.
+    If token not found, returns None.
+    """
+    from hyperliquid.info import Info
+    from hyperliquid.utils import constants
+    info = Info(constants.MAINNET_API_URL, skip_ws=True)
+    spot_meta = info.spot_meta()
+    for token in spot_meta["tokens"]:
+        if token["name"] == token_name:
+            return token["szDecimals"]
+    return None
+
+def adjust_price_precision_spot(px, sz_decimals, max_decimals=8):
+    """
+    Adjusts price precision according to exchange requirements.
     
-    def count_decimal_digits(num):
-        import math
-        return math.log10(num)*-1
+    Args:
+        px (float): The original price
+        sz_decimals (int): The szDecimals value for the asset
+        max_decimals (int): Maximum decimal places (6 for perps, 8 for spot)
+    
+    Returns:
+        float: Precision-adjusted price
+    
+    Rules:
+    - Prices > 100,000: rounded to integer
+    - Other prices: rounded to 5 significant figures and max_decimals - sz_decimals decimal places
+    - Integer prices are always allowed regardless of significant figures
+    """
+    # If price is greater than 100k, round to integer
+    if px > 100_000:
+        return round(px)
+    
+    # Round to 5 significant figures first, then to allowed decimal places
+    sig_fig_rounded = float(f"{px:.5g}")
+    decimal_places = max_decimals - sz_decimals
+    
+    # Ensure we don't have negative decimal places
+    decimal_places = max(0, decimal_places)
+    
+    return round(sig_fig_rounded, decimal_places)
+
+
+def get_coin_info(coin):
     
     match coin:
         case "BTC":
-            size_tick = 0.00001
-            price_tick = 1
+            spot_pair = "UBTC/USDC"
             return {
-                "HL_spot_pair": "UBTC/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "ETH":
-            size_tick = 0.0001
-            price_tick = 0.1
+            spot_pair = "UETH/USDC"
             return {
-                "HL_spot_pair": "UETH/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "SOL":
-            size_tick = 0.001
-            price_tick = 0.01
+            spot_pair = "USOL/USDC"
             return {
-                "HL_spot_pair": "USOL/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "HYPE":
-            size_tick = 0.01
-            price_tick = 0.001
+            spot_pair = "HYPE/USDC"
             return {
-                "HL_spot_pair": "HYPE/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "PUMP":
-            size_tick = 1
-            price_tick = 0.0000001
+            spot_pair = "UPUMP/USDC"
             return {
-                "HL_spot_pair": "UPUMP/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "FARTCOIN":
-            size_tick = 0.1
-            price_tick = 0.0001
+            spot_pair = "UFART/USDC"
             return {
-                "HL_spot_pair": "UFART/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case "PURR":
-            size_tick = 1
-            price_tick = 0.00001
+            spot_pair = "PURR/USDC"
             return {
-                "HL_spot_pair": "PURR/USDC",
-                "size_tick": size_tick,
-                "size_decimal_digits": count_decimal_digits(size_tick),
-                "price_tick": price_tick,
-                "price_decimal_digits": count_decimal_digits(price_tick)
+                "HL_spot_pair": spot_pair,
+                "size_decimal_digits": int(get_token_decimals(spot_pair.replace('/USDC',''))),
             }
         case _:
             raise ValueError(f"{coin} is unsupported coin")
@@ -623,7 +635,6 @@ def HL_buy_spot_market(coin, spot_size):
     coin_info = get_coin_info(coin)
     HL_spot_pair = coin_info['HL_spot_pair']
     size_decimal_digits = coin_info['size_decimal_digits']
-    # price_decimal_digits = coin_info['price_decimal_digits']
 
     if GLOBAL_ADDRESS is None or PRIVATE_HL is None:
         config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
@@ -643,7 +654,7 @@ def HL_buy_spot_market(coin, spot_size):
     write_log(rounded_spot_buy_size)
     rounded_spot_buy_size = round_to_n_digits(rounded_spot_buy_size*(1.0+0.065/100.0), size_decimal_digits) # 0.065 depends on your spot taker fees 
     write_log(rounded_spot_buy_size)
-    #limit_buy_price = floor_to_n_digits(last_price*1.05, price_decimal_digits)
+
     # True -> buy
     spot_order_result = exchange.market_open(HL_spot_pair, True, rounded_spot_buy_size, None, 0.10)
     if spot_order_result["status"] == "ok":
@@ -688,7 +699,6 @@ def HL_sell_spot_market(coin):
     coin_info = get_coin_info(coin)
     HL_spot_pair = coin_info['HL_spot_pair']
     size_decimal_digits = coin_info['size_decimal_digits']
-    price_decimal_digits = coin_info['price_decimal_digits']
 
     if GLOBAL_ADDRESS is None or PRIVATE_HL is None:
         config = Configuration.from_files(["user_data/config.json", "user_data/config-private.json"])
@@ -704,7 +714,8 @@ def HL_sell_spot_market(coin):
     last_price = _get_spot_price(coin)
 
     rounded_spot_sell_size = round_to_n_digits(spot_size, size_decimal_digits)
-    limit_sell_price = round_to_n_digits(last_price*0.95, price_decimal_digits)
+    limit_sell_price = adjust_price_precision_spot(last_price*0.95, size_decimal_digits)
+
     # False -> sell
     spot_order_result = exchange.order(HL_spot_pair, False, rounded_spot_sell_size, limit_sell_price, {"limit": {"tif": "Ioc"}})
     write_log(spot_order_result)
@@ -1317,4 +1328,3 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
-
