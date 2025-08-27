@@ -59,7 +59,7 @@
     "pairlists": [
         {
             "method": "StaticPairList",
-            "number_assets": 2,
+            "number_assets": 3,
             "sort_key": "quoteVolume",
             "min_value": 100000,
             "refresh_period": 1800
@@ -104,4 +104,5 @@
     "internals": {
         "process_throttle_secs": 55
     }
+
 }
