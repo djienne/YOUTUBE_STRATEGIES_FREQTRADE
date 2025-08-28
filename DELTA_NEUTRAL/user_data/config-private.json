@@ -3,9 +3,5 @@
     "walletAddress": "0x...",
     "privateKey": "0x...",
     "privateKeyEthWallet": "0x..."
-  },
-  "api_server": {
-    "enabled": false,
-    "verbosity": "info"
   }
 }
