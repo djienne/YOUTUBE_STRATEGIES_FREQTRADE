@@ -902,8 +902,8 @@ class DELTA_NEUTRAL(IStrategy):
     # Tunable parameters
     MINIMUM_FUNDING_APR_pc = 10
     MINIMUM_VOLUME_usdc = 2_500_000
-    MINIMUM_TIME_TO_KEEP_POSITION_hour = 24*30 # minimum time for a delta neutral position to be kept openned to have a good chance it compensates the opening+closing fees of the spot and futures trades
-                                               # here 30 days
+    MINIMUM_TIME_TO_KEEP_POSITION_hour = 24*60 # minimum time for a delta neutral position to be kept openned to have a good chance it compensates the opening+closing fees of the spot and futures trades
+                                               # here 60 days
     MAX_POSITIONS = 2  # Maximum number of open positions
 
     # State variables (do not touch)
@@ -985,7 +985,7 @@ class DELTA_NEUTRAL(IStrategy):
         self.has_looped_once = False
         if self.config["runmode"].value in ('live', 'dry_run'):
             
-            # retrive historical fundings for the last 30 days and update the funding database (in case there would be missing data)
+            # retrive historical fundings for the last days and update the funding database (in case there would be missing data)
             write_log("Updating fundings database historical_funding_rates_DB.json with historical data from API.")
             here = Path(__file__).resolve().parent
             db_path = here / "historical_funding_rates_DB.json"
@@ -1328,3 +1328,4 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
+
