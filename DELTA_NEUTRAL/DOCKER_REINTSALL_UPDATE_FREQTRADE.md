@@ -1,6 +1,6 @@
 ## Updating Freqtrade to the Newest Version
 
-To ensure Freqtrade updates and reinstalls properly to the latest version:
+If you want to update and/or reinstall Freqtrade properly to the latest version or any version you want:
 
 1. **Update the version number**
 
