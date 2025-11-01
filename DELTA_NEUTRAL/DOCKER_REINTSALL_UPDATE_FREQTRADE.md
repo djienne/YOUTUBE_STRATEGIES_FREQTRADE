@@ -1,7 +1,3 @@
-Here’s your text rewritten and formatted in clean, professional Markdown:
-
----
-
 ## Updating Freqtrade to the Newest Version
 
 To ensure Freqtrade updates and reinstalls properly to the latest version:
@@ -27,7 +23,3 @@ To ensure Freqtrade updates and reinstalls properly to the latest version:
    ```bash
    docker compose build
    ```
-
----
-
-Would you like me to include a short code snippet example showing how to change the version line in those files?
