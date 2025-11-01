@@ -1,3 +1,4 @@
-FROM freqtradeorg/freqtrade:2025.5
+FROM freqtradeorg/freqtrade:2025.10
 
 RUN pip3 install ta tqdm scipy plotly yfinance statsmodels hyperliquid-python-sdk
+
