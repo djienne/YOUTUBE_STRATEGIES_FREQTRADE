@@ -45,7 +45,6 @@
             "rateLimit": 20
         },
         "pair_whitelist": [
-            "BTC/USDC:USDC",
             "ETH/USDC:USDC",
             "SOL/USDC:USDC",
             "HYPE/USDC:USDC",
@@ -107,4 +106,5 @@
     }
 
 }
+
 
