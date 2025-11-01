@@ -1,7 +1,7 @@
 version: '3'
 services:
   freqtrade:
-    image: freqtradeorg/freqtrade:2025.5
+    image: freqtradeorg/freqtrade:2025.10
     # image: freqtradeorg/freqtrade:develop
     # Use plotting image
     # image: freqtradeorg/freqtrade:develop_plot
@@ -30,3 +30,4 @@ services:
       --db-url sqlite:////freqtrade/user_data/tradesv3.sqlite
       --config /freqtrade/user_data/config.json --config /freqtrade/user_data/config-private.json -v
       --strategy DELTA_NEUTRAL
+
