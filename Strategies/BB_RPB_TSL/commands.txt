@@ -1,0 +1,18 @@
+sudo docker-compose up
+
+freqtrade download-data --timeframe 5m 1m 1h 4h --timerange 20190101- --config ./user_data/config_backtest.json
+
+freqtrade backtesting --strategy BB_RPB_TSL --config ./user_data/config_backtest.json --timeframe 5m --timeframe-detail 1m --timerange 20190101-
+
+freqtrade hyperopt --strategy BB_RPB_TSL --min-trades 150 --timeframe 5m --timeframe-detail 1m --config ./user_data/config_backtest.json --hyperopt-loss BestHyperOptLoss --analyze-per-epoch --timerange 20190101- --spaces buy trades -j 2 -e 5000
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade download-data --timeframe 5m 1m --timerange 20190101- --config ./user_data/config_backtest.json
+
+freqtrade hyperopt --strategy BB_RPB_TSL --min-trades 150 --timeframe 5m --timeframe-detail 1m --config ./user_data/config_backtest.json --hyperopt-loss BestHyperOptLoss --analyze-per-epoch --timerange 20190101- --spaces buy -j 12 -e 5000
+
+freqtrade hyperopt --strategy BB_RPB_TSL --min-trades 150 --timeframe 5m --config ./user_data/config_backtest.json --hyperopt-loss SharpeHyperOptLossDaily --analyze-per-epoch --timerange 20190101- --spaces buy -j 6 -e 5000
+
+
+freqtrade plot-profit --timeframe 5m --config ./user_data/config.json --timerange 20190101-
