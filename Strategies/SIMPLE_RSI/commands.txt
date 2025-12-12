@@ -1,0 +1,20 @@
+sudo docker-compose up
+
+sudo docker exec -it freqtrade bash
+
+pip install ta
+pip3 install ta
+
+freqtrade backtesting --strategy SimpleRSI --config ./user_data/config_backtest.json --timeframe 1d --timeframe-detail 4h --timerange 20180101-20230729 --cache none
+
+freqtrade download-data --timeframe 1d 4h --timerange 20170817- --config ./user_data/config_backtest.json
+
+freqtrade hyperopt --strategy SimpleRSI --timeframe 1d --min-trades 100 --config ./user_data/config_backtest.json --hyperopt-loss OnlyProfitHyperOptLoss --analyze-per-epoch --timerange 20190101- --spaces buy roi stoploss trades -j 1 -e 500
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade plot-profit --timeframe 1d --config ./user_data/config_backtest.json --timerange 20190101-
+
+
+///////
+

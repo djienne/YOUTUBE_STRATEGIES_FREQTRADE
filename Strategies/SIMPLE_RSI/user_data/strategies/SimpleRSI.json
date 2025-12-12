@@ -1,0 +1,32 @@
+{
+  "strategy_name": "SimpleRSI",
+  "params": {
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "buy": {
+      "lev": 1.0,
+      "minRSI": 72.0,
+      "rsiWindow": 16
+    },
+    "sell": {},
+    "protection": {},
+    "roi": {
+      "0": 0.646,
+      "10535": 0.323,
+      "23703": 0.106,
+      "33290": 0
+    },
+    "stoploss": {
+      "stoploss": -0.148
+    },
+    "max_open_trades": {
+      "max_open_trades": 20
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-02-08 12:11:48.481126+00:00"
+}
