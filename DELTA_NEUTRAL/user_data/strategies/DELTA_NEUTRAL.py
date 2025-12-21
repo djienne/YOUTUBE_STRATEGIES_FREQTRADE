@@ -910,8 +910,6 @@ class DELTA_NEUTRAL(IStrategy):
     MINIMUM_VOLUME_usdc = 2_500_000
     MINIMUM_TIME_TO_KEEP_POSITION_hour = 24*30 # minimum time for a delta neutral position to be kept openned to have a good chance it compensates the opening+closing fees of the spot and futures trades
                                                # here 30 days
-    MAX_POSITIONS = 2  # Maximum number of open positions
-
     # State variables (do not touch)
     has_looped_once = False
     nb_loop = 1
@@ -938,6 +936,13 @@ class DELTA_NEUTRAL(IStrategy):
         'entry': 'gtc',
         'exit': 'gtc'
     }
+
+    def _max_positions(self) -> int:
+        max_open_trades = self.config.get("max_open_trades", 0)
+        if max_open_trades == -1:
+            write_log("ERROR: max_open_trades is -1 (unlimited). Refusing to run for safety. ABORTING.")
+            sys.exit()
+        return max_open_trades
 
     def select_BEST_PAIRS(self, quote_volumes: dict, fundings: dict, max_pairs: int = 2) -> list[str]:
         """
@@ -990,6 +995,7 @@ class DELTA_NEUTRAL(IStrategy):
         write_log("NEW START")
         self.has_looped_once = False
         if self.config["runmode"].value in ('live', 'dry_run'):
+            max_positions = self._max_positions()
             
             # retrive historical fundings for the last 30 days and update the funding database (in case there would be missing data)
             write_log("Updating fundings database historical_funding_rates_DB.json with historical data from API.")
@@ -1014,7 +1020,7 @@ class DELTA_NEUTRAL(IStrategy):
                     write_log(f'WARNING: The number of spot and perp positions should be the same ! Check if everyting is fine.')
                     sys.exit()
             
-            if open_perp_count!=self.MAX_POSITIONS:
+            if open_perp_count!=max_positions:
                 if self.config["runmode"].value in ('live'):
                     REBALANCE_PERP_SPOT()
 
@@ -1029,6 +1035,7 @@ class DELTA_NEUTRAL(IStrategy):
         """
 
         if self.config["runmode"].value in ('live', 'dry_run'):
+            max_positions = self._max_positions()
             write_log(f'Loop #{self.nb_loop}')
 
             log_equity(get_account_total_equity())
@@ -1049,7 +1056,7 @@ class DELTA_NEUTRAL(IStrategy):
              # rebalance to have 50/50 perp/spot USDC repartition  if several conditions are met
             if self.order_just_filled:
                 self.order_just_filled = False
-                if open_count!=self.MAX_POSITIONS and open_count==nb_spot_position:
+                if open_count!=max_positions and open_count==nb_spot_position:
                     try: 
                         if self.config["runmode"].value in ('live') and not self.rebalancing_done:
                             REBALANCE_PERP_SPOT()
@@ -1067,8 +1074,8 @@ class DELTA_NEUTRAL(IStrategy):
                 open_pairs = [t.pair for t in open_trades]
                 leverages = [t.leverage for t in open_trades]
 
-                if len(open_pairs) > self.MAX_POSITIONS: # abort if there are more positions than allowed
-                    write_log(f'Should not have more than {self.MAX_POSITIONS} positions opened! ABORTING.')
+                if len(open_pairs) > max_positions: # abort if there are more positions than allowed
+                    write_log(f'Should not have more than {max_positions} positions opened! ABORTING.')
                     sys.exit()
 
                 for lev in leverages:
@@ -1082,7 +1089,7 @@ class DELTA_NEUTRAL(IStrategy):
 
             self.BEST_PAIRS = []
             if self.has_looped_once:
-                self.BEST_PAIRS = self.select_BEST_PAIRS(self.QUOTE_VOLUMES, self.FUNDINGS, self.MAX_POSITIONS)
+                self.BEST_PAIRS = self.select_BEST_PAIRS(self.QUOTE_VOLUMES, self.FUNDINGS, max_positions)
                 # log some information
                 if self.BEST_PAIRS:
                     if self.nb_loop == 3 or self.nb_loop%10==0:
@@ -1100,6 +1107,7 @@ class DELTA_NEUTRAL(IStrategy):
             if self.FORCE_EXIT:
                 return df
 
+            max_positions = self._max_positions()
             df['entry_signal'] = 0
             df['exit_signal'] = 0
 
@@ -1132,13 +1140,13 @@ class DELTA_NEUTRAL(IStrategy):
             if not self.has_looped_once:
                 df['entry_signal'] = 0
             else:
-                self.BEST_PAIRS = self.select_BEST_PAIRS(self.QUOTE_VOLUMES, self.FUNDINGS, self.MAX_POSITIONS)
+                self.BEST_PAIRS = self.select_BEST_PAIRS(self.QUOTE_VOLUMES, self.FUNDINGS, max_positions)
                 # Signal to open short if:
                 # 1. We have fewer than max positions open
                 # 2. bot has already done one loop, i.e. we are in loop #2 or more (i.e. we have already grathered current fundings for all pairs)
                 # 3. Current pair is in best pairs
                 # 4. Current pair is not already open
-                if (open_count < self.MAX_POSITIONS and 
+                if (open_count < max_positions and 
                     self.has_looped_once and 
                     cPAIR in self.BEST_PAIRS and 
                     cPAIR not in self.CURRENT_POSITION_PAIRS):
@@ -1156,8 +1164,9 @@ class DELTA_NEUTRAL(IStrategy):
             
             current_pair = metadata['pair']
             open_count = Trade.get_open_trade_count()
+            max_positions = self._max_positions()
             if (current_pair in self.BEST_PAIRS and 
-                open_count<self.MAX_POSITIONS and
+                open_count<max_positions and
                 current_pair not in self.CURRENT_POSITION_PAIRS):
                 dataframe.loc[dataframe['entry_signal'] == -1, 'enter_short'] = 1
 
@@ -1267,24 +1276,25 @@ class DELTA_NEUTRAL(IStrategy):
                             **kwargs) -> float:
         # self.wallets.get_total_stake_amount() gives the "available_capital" in the config.json
         open_count = Trade.get_open_trade_count()
+        max_positions = self._max_positions()
 
         dust_USDC = 0.5
 
         returned_val = 0.0
 
-        if self.config["max_open_trades"]==3:
+        if max_positions==3:
             if open_count==0:
                 returned_val = max_stake/3.0-dust_USDC
             elif open_count==1:
                 returned_val = max_stake/2.0-dust_USDC
             elif open_count==2:
                 returned_val = max_stake-dust_USDC
-        elif self.config["max_open_trades"]==2:
+        elif max_positions==2:
             if open_count==0:
                 returned_val = max_stake/2.0-dust_USDC
             elif open_count==1:
                 returned_val = max_stake-dust_USDC
-        elif self.config["max_open_trades"]==1:
+        elif max_positions==1:
             if open_count==0:
                 returned_val = max_stake-dust_USDC
         else:
@@ -1320,7 +1330,8 @@ class DELTA_NEUTRAL(IStrategy):
         self.rebalancing_done = False
         open_count = Trade.get_open_trade_count() # (number of perp positions)
         nb_spot_position = GET_NUMBER_SPOT_POSITION()
-        if open_count==nb_spot_position and open_count!=self.MAX_POSITIONS:
+        max_positions = self._max_positions()
+        if open_count==nb_spot_position and open_count!=max_positions:
             REBALANCE_PERP_SPOT()
             self.rebalancing_done = True
         if open_count!=nb_spot_position:
@@ -1334,4 +1345,3 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
-
