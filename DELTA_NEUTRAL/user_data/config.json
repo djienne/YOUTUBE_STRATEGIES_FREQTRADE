@@ -75,7 +75,7 @@
     "telegram": {
         "enabled": false,
         "token": "",
-        "chat_id": "1655109323"
+        "chat_id": ""
     },
     "api_server": {
         "enabled": false,
@@ -98,3 +98,4 @@
         "process_throttle_secs": 60
     }
 }
+
