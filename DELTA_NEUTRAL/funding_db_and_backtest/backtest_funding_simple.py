@@ -1,47 +1,17 @@
 # backtest_funding.py
-import json
-import os
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Tuple
+from datetime import datetime, timedelta
+from typing import Dict, Optional
 import pandas as pd
 
-# ---------- DB I/O ----------
-def load_db(path: str) -> dict:
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Database not found: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-# ---------- Time helpers ----------
-def _parse_iso_utc(ts: str) -> datetime:
-    """Parse ISO 8601 like 2025-07-27T08:00:00.000+00:00 to aware UTC datetime."""
-    dt = datetime.fromisoformat(ts)
-    return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-
-def _iso_no_tz(dt: datetime) -> str:
-    """Format datetime as YYYY-MM-DDTHH:MM:SS in UTC, without ms or +00:00."""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    else:
-        dt = dt.astimezone(timezone.utc)
-    return dt.strftime("%Y-%m-%dT%H:%M:%S")
-
-# ---------- Data extraction ----------
-def _sorted_coin_series(db: Dict, market_key: str) -> List[Tuple[datetime, float]]:
-    """
-    Extract (timestamp, annualized_pct) for market_key, sorted by time.
-    Only includes timestamps that contain that market_key.
-    """
-    rows: List[Tuple[datetime, float]] = []
-    for ts, payload in db.items():
-        if isinstance(payload, dict) and market_key in payload:
-            try:
-                ann_pct = float(payload[market_key])  # stored annualized percent
-                rows.append((_parse_iso_utc(ts), ann_pct))
-            except (ValueError, TypeError):
-                pass
-    rows.sort(key=lambda x: x[0])
-    return rows
+from funding_utils import (
+    annualized_pct_to_hourly_fraction,
+    filter_series_by_time,
+    extract_coin_series,
+    iso_no_tz,
+    load_backtest_config,
+    load_db,
+    parse_iso_utc_optional,
+)
 
 # ---------- Backtest ----------
 def backtest_funding(
@@ -52,6 +22,9 @@ def backtest_funding(
     settle_key: str = "USDC",
     compounding: bool = True,
     gap_behavior: str = "skip",  # "skip" or "zero"
+    funding_efficiency: float = 0.5,
+    start_dt: Optional[datetime] = None,
+    end_dt: Optional[datetime] = None,
 ) -> Dict:
     """
     Backtest funding P&L for a coin using DB values (annualized percent per hour bucket).
@@ -61,10 +34,11 @@ def backtest_funding(
 
     db = load_db(db_path)
     market_key = f"{coin}/{quote_key}:{settle_key}"
-    series = _sorted_coin_series(db, market_key)
+    series_by_dt = extract_coin_series(db, coin, quote_key, settle_key)
+    series_by_dt = filter_series_by_time(series_by_dt, start_dt, end_dt)
 
     # Return a consistent schema even when no data is found
-    if not series:
+    if not series_by_dt:
         return {
             "coin": coin,
             "market_key": market_key,
@@ -78,8 +52,9 @@ def backtest_funding(
             "error": "No data",
         }
 
-    start_dt, end_dt = series[0][0], series[-1][0]
-    ann_pct_by_dt = {dt: ann for dt, ann in series}
+    ts_sorted = sorted(series_by_dt.keys())
+    start_dt, end_dt = ts_sorted[0], ts_sorted[-1]
+    ann_pct_by_dt = series_by_dt
 
     balance = float(initial_balance)
     num_hours = 0
@@ -90,14 +65,13 @@ def backtest_funding(
         num_hours += 1
         ann_pct = ann_pct_by_dt.get(cur)
 
-        if ann_pct is not None:
-            ann_pct = ann_pct/2.0 # to take into account that only half of the capital gets funding fee
-
         if ann_pct is None and gap_behavior == "skip":
             cur += timedelta(hours=1)
             continue
 
-        hourly_rate = 0.0 if ann_pct is None else (ann_pct / 100.0) / (365.0 * 24.0)
+        hourly_rate = 0.0 if ann_pct is None else annualized_pct_to_hourly_fraction(
+            ann_pct, funding_efficiency
+        )
         if ann_pct is not None:
             applied_hours += 1
 
@@ -109,18 +83,19 @@ def backtest_funding(
         cur += timedelta(hours=1)
 
     total_return = (balance / initial_balance) - 1.0
-    elapsed_days = max((end_dt - start_dt).total_seconds() / 86400.0, 1e-9)
+    hours_applied = applied_hours if gap_behavior == "skip" else num_hours
+    elapsed_days = max(hours_applied / 24.0, 1e-9)
     ann_factor = 365.0 / elapsed_days
     annualized_return = (1.0 + total_return) ** ann_factor - 1.0
 
     return {
         "coin": coin,
         "market_key": market_key,
-        "start": _iso_no_tz(start_dt),
-        "end": _iso_no_tz(end_dt),
+        "start": iso_no_tz(start_dt),
+        "end": iso_no_tz(end_dt),
         "interval_days": round(elapsed_days, 2),
         "hours_in_span": num_hours,
-        "hours_applied": applied_hours if gap_behavior == "skip" else num_hours,
+        "hours_applied": hours_applied,
         "total_return_pct": round(total_return * 100.0, 4),
         "annualized_return_pct": round(annualized_return * 100.0, 4),
         "error": None,
@@ -128,17 +103,29 @@ def backtest_funding(
 
 # ---------- Run & summary ----------
 if __name__ == "__main__":
-    db_path = "funding_db_test.json"  # change if needed
-    coins = ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"]
+    config = load_backtest_config()
+    db_path = config.get("db_path", "funding_db_test.json")
+    coins = config.get("coins", ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"])
+    simple_cfg = config.get("simple_backtest", {})
+
+    start_dt = parse_iso_utc_optional(simple_cfg.get("start_time_utc"))
+    end_dt = parse_iso_utc_optional(simple_cfg.get("end_time_utc"))
+    initial_balance = simple_cfg.get("initial_balance", 1000.0)
+    gap_behavior = simple_cfg.get("gap_behavior", "skip")
+    compounding = simple_cfg.get("compounding", True)
+    funding_efficiency = simple_cfg.get("funding_efficiency", 0.5)
 
     results = []
     for c in coins:
         res = backtest_funding(
             db_path=db_path,
             coin=c,
-            initial_balance=1000.0,
-            gap_behavior="skip",
-            compounding=True
+            initial_balance=initial_balance,
+            gap_behavior=gap_behavior,
+            compounding=compounding,
+            funding_efficiency=funding_efficiency,
+            start_dt=start_dt,
+            end_dt=end_dt
         )
         results.append(res)
 

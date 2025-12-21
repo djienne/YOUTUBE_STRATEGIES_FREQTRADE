@@ -1,57 +1,23 @@
 # multi_slot_funding_backtest.py
-import json
-import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional, Set
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ----------------------------
-# DB I/O
-# ----------------------------
-
-def load_db(path: str) -> dict:
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Database not found: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-# ----------------------------
-# Time helpers
-# ----------------------------
-
-def parse_iso_utc(ts: str) -> datetime:
-    """Parse ISO like 2025-07-27T08:00:00.000+00:00 or 2025-07-27T08:00:00 to aware UTC."""
-    dt = datetime.fromisoformat(ts)
-    return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-
-def iso_no_tz(dt: datetime) -> str:
-    """Format as 'YYYY-MM-DDTHH:MM:SS' in UTC."""
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    else:
-        dt = dt.astimezone(timezone.utc)
-    return dt.strftime("%Y-%m-%dT%H:%M:%S")
+from funding_utils import (
+    annualized_pct_to_hourly_fraction,
+    filter_series_by_time,
+    extract_coin_series,
+    iso_no_tz,
+    load_backtest_config,
+    load_db,
+    parse_iso_utc_optional,
+)
 
 # ----------------------------
 # Data shaping
 # ----------------------------
-
-def extract_coin_series(db: Dict, coin: str, quote="USDC", settle="USDC") -> Dict[datetime, float]:
-    """
-    Return {timestamp(datetime UTC): annualized_pct} for a coin.
-    """
-    key = f"{coin}/{quote}:{settle}"
-    out: Dict[datetime, float] = {}
-    for ts, payload in db.items():
-        if isinstance(payload, dict) and key in payload:
-            try:
-                ann_pct = float(payload[key])
-                out[parse_iso_utc(ts)] = ann_pct
-            except (ValueError, TypeError):
-                pass
-    return out
 
 def continuous_hour_grid(series_by_coin: Dict[str, Dict[datetime, float]]) -> List[datetime]:
     """Continuous hourly grid from the earliest timestamp across all coins to the latest."""
@@ -131,8 +97,9 @@ class BacktestParams:
     initial_balance: float = 1000.0
     slots: int = 2
     min_hold_days: int = 15
-    open_fee_rate: float = 0.0005  # 0.05%
-    close_fee_rate: float = 0.0005  # 0.05%
+    open_fee_rate: float = 0.0005  # 0.05% per leg
+    close_fee_rate: float = 0.0005  # 0.05% per leg
+    fee_multiplier: float = 2.0  # 2.0 for spot+perp hedges, 1.0 if rate already includes both legs
     quote_key: str = "USDC"
     settle_key: str = "USDC"
     apply_final_close_fee: bool = False  # if True, close open trades at the very end with a fee
@@ -153,16 +120,6 @@ class BacktestResult:
     per_slot_trades: Dict[int, pd.DataFrame]
     equity_curve: Optional[pd.DataFrame] = None  # columns: ['timestamp','equity']
 
-def annualized_pct_to_hourly_fraction(ann_pct: float, funding_efficiency: float = 0.5) -> float:
-    """
-    Convert annualized percent to hourly fraction, accounting for funding efficiency.
-    
-    Args:
-        ann_pct: Annualized funding rate percentage
-        funding_efficiency: Fraction of capital that actually earns funding rate (default 0.5 for hedged strategy)
-    """
-    return (ann_pct / 100.0) / (365.0 * 24.0) * funding_efficiency
-
 def rank_top_n(ann_by_coin: Dict[str, Optional[float]], n: int) -> List[str]:
     """
     Return top-n coins by annualized percent for this hour.
@@ -180,7 +137,9 @@ def backtest_multi_slot(
     coins: List[str],
     params: BacktestParams,
     return_curve: bool = True,
-    debug: bool = False
+    debug: bool = False,
+    start_dt: Optional[datetime] = None,
+    end_dt: Optional[datetime] = None,
 ) -> BacktestResult:
     db = load_db(db_path)
 
@@ -188,6 +147,10 @@ def backtest_multi_slot(
     series_by_coin: Dict[str, Dict[datetime, float]] = {
         c: extract_coin_series(db, c, params.quote_key, params.settle_key) for c in coins
     }
+    if start_dt or end_dt:
+        series_by_coin = {
+            c: filter_series_by_time(s, start_dt, end_dt) for c, s in series_by_coin.items()
+        }
     # Remove coins with no data
     series_by_coin = {c: s for c, s in series_by_coin.items() if len(s) > 0}
     if not series_by_coin:
@@ -197,6 +160,8 @@ def backtest_multi_slot(
     grid = continuous_hour_grid(series_by_coin)
     start_dt, end_dt = grid[0], grid[-1]
     min_hold_hours = params.min_hold_days * 24
+    open_fee = params.open_fee_rate * params.fee_multiplier
+    close_fee = params.close_fee_rate * params.fee_multiplier
 
     # Initialize slots
     slot_equity_init = params.initial_balance / params.slots
@@ -224,16 +189,7 @@ def backtest_multi_slot(
         # Determine target = top-N by funding this hour
         target = rank_top_n(ann_by_coin, params.slots)
 
-        # 1) Accrue funding to currently held positions, age them
-        for s in slots:
-            if s.coin is not None:
-                ann_pct = ann_by_coin.get(s.coin)
-                # UPDATED: Apply funding efficiency (only 50% of capital earns funding rate)
-                hourly = annualized_pct_to_hourly_fraction(ann_pct, params.funding_efficiency) if ann_pct is not None else 0.0
-                s.equity *= (1.0 + hourly)
-                s.hours_held += 1
-
-        # 2) Fill empty slots with needed coins first
+        # 1) Fill empty slots with needed coins first
         held: Set[str] = set([s.coin for s in slots if s.coin is not None])
         needed: List[str] = [c for c in target if c not in held]
 
@@ -243,7 +199,7 @@ def backtest_multi_slot(
             if s.coin is None:
                 new_coin = needed.pop(0)
                 # Open -> fee
-                s.equity *= (1.0 - params.open_fee_rate)
+                s.equity *= (1.0 - open_fee)
                 s.coin = new_coin
                 s.hours_held = 0
                 s.total_switches += 1
@@ -257,18 +213,17 @@ def backtest_multi_slot(
                 if debug:
                     print(f"{iso_no_tz(t)} OPEN {new_coin}")
 
-        # 3) For occupied slots not in target, if min-hold satisfied, switch to needed coins
+        # 2) For occupied slots not in target, if min-hold satisfied, switch to needed coins or close to cash
         held = set([s.coin for s in slots if s.coin is not None])  # refresh
         needed = [c for c in target if c not in held]
 
         for s in slots:
-            if not needed:
-                break
             if s.coin is None or s.coin in target:
                 continue
             if s.hours_held >= min_hold_hours:
                 # Close current -> fee
-                s.equity *= (1.0 - params.close_fee_rate)
+                old_coin = s.coin
+                s.equity *= (1.0 - close_fee)
                 # Log close of existing trade
                 if s.trade_log and s.trade_log[-1].close_time is None:
                     tr = s.trade_log[-1]
@@ -280,21 +235,37 @@ def backtest_multi_slot(
                     hold_hours_accumulated += s.hours_held
                     hold_events += 1
 
-                # Switch
-                new_coin = needed.pop(0)
-                s.equity *= (1.0 - params.open_fee_rate)
-                s.coin = new_coin
-                s.hours_held = 0
-                s.total_switches += 1
-                total_switches += 1
-                # New trade record
-                s.trade_log.append(Trade(
-                    coin=new_coin,
-                    open_time=t,
-                    open_equity=s.equity
-                ))
-                if debug:
-                    print(f"{iso_no_tz(t)} SWITCH -> {new_coin}")
+                if needed:
+                    # Switch
+                    new_coin = needed.pop(0)
+                    s.equity *= (1.0 - open_fee)
+                    s.coin = new_coin
+                    s.hours_held = 0
+                    s.total_switches += 1
+                    total_switches += 1
+                    # New trade record
+                    s.trade_log.append(Trade(
+                        coin=new_coin,
+                        open_time=t,
+                        open_equity=s.equity
+                    ))
+                    if debug:
+                        print(f"{iso_no_tz(t)} SWITCH -> {new_coin}")
+                else:
+                    # No replacement available, move to cash
+                    s.coin = None
+                    s.hours_held = 0
+                    if debug:
+                        print(f"{iso_no_tz(t)} CLOSE -> CASH ({old_coin})")
+
+        # 3) Accrue funding to currently held positions, age them
+        for s in slots:
+            if s.coin is not None:
+                ann_pct = ann_by_coin.get(s.coin)
+                # Apply funding efficiency (only 50% of capital earns funding rate)
+                hourly = annualized_pct_to_hourly_fraction(ann_pct, params.funding_efficiency) if ann_pct is not None else 0.0
+                s.equity *= (1.0 + hourly)
+                s.hours_held += 1
 
         # 4) Record equity
         if return_curve:
@@ -304,7 +275,7 @@ def backtest_multi_slot(
     if params.apply_final_close_fee:
         for s in slots:
             if s.coin is not None:
-                s.equity *= (1.0 - params.close_fee_rate)
+                s.equity *= (1.0 - close_fee)
             if s.trade_log and s.trade_log[-1].close_time is None:
                 tr = s.trade_log[-1]
                 tr.close_time = end_dt
@@ -322,7 +293,7 @@ def backtest_multi_slot(
             hold_hours_accumulated += s.hours_held
             hold_events += 1
 
-    elapsed_days = max((end_dt - start_dt).total_seconds() / 86400.0, 1e-9)
+    elapsed_days = max(len(grid) / 24.0, 1e-9)
     init = params.initial_balance
     fin = sum(s.equity for s in slots)
     total_ret = (fin / init) - 1.0
@@ -384,17 +355,23 @@ def backtest_multi_slot(
 # Example usage
 # ----------------------------
 if __name__ == "__main__":
-    db_path = "funding_db_test.json"   # <- path to your DB
-    coins = ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"]
+    config = load_backtest_config()
+    db_path = config.get("db_path", "funding_db_test.json")
+    coins = config.get("coins", ["BTC", "ETH", "SOL", "HYPE", "PUMP", "FARTCOIN", "PURR"])
+    multi_cfg = config.get("multi_slot_backtest", {})
+
+    start_dt = parse_iso_utc_optional(multi_cfg.get("start_time_utc"))
+    end_dt = parse_iso_utc_optional(multi_cfg.get("end_time_utc"))
 
     params = BacktestParams(
-        initial_balance=1000.0,
-        slots=2,                # try 1 first
-        min_hold_days=30,
-        open_fee_rate=0.0006,
-        close_fee_rate=0.0006,
-        apply_final_close_fee=False,  # set True if you want to force-close at end
-        funding_efficiency=0.5        # NEW: 50% capital efficiency for hedged strategy
+        initial_balance=multi_cfg.get("initial_balance", 1000.0),
+        slots=multi_cfg.get("slots", 2),                # try 1 first
+        min_hold_days=multi_cfg.get("min_hold_days", 30),
+        open_fee_rate=multi_cfg.get("open_fee_rate", 0.0006),
+        close_fee_rate=multi_cfg.get("close_fee_rate", 0.0006),
+        fee_multiplier=multi_cfg.get("fee_multiplier", 2.0),
+        apply_final_close_fee=multi_cfg.get("apply_final_close_fee", False),  # set True if you want to force-close at end
+        funding_efficiency=multi_cfg.get("funding_efficiency", 0.5)        # NEW: 50% capital efficiency for hedged strategy
     )
 
     res = backtest_multi_slot(
@@ -402,7 +379,9 @@ if __name__ == "__main__":
         coins=coins,
         params=params,
         return_curve=True,
-        debug=False
+        debug=False,
+        start_dt=start_dt,
+        end_dt=end_dt
     )
 
     print("\n=== Portfolio Summary ===")
@@ -416,6 +395,7 @@ if __name__ == "__main__":
         "annualized_return_pct": res.annualized_return_pct,
         "total_switches": res.total_switches,
         "avg_hold_days": res.avg_hold_days,
+        "fee_multiplier": params.fee_multiplier,
         "funding_efficiency": params.funding_efficiency,  # NEW: Show efficiency in output
     }
     for k, v in summary.items():
@@ -442,20 +422,23 @@ if __name__ == "__main__":
     for slots in range(1, 4):  # N = 1 to 3
         for min_hold in range(7, 101):  # min_hold_days = 7 to 100
             params = BacktestParams(
-                initial_balance=1000.0,
+                initial_balance=multi_cfg.get("initial_balance", 1000.0),
                 slots=slots,
                 min_hold_days=min_hold,
-                open_fee_rate=0.0006,
-                close_fee_rate=0.0006,
-                apply_final_close_fee=False,
-                funding_efficiency=0.5  # NEW: 50% efficiency
+                open_fee_rate=multi_cfg.get("open_fee_rate", 0.0006),
+                close_fee_rate=multi_cfg.get("close_fee_rate", 0.0006),
+                fee_multiplier=multi_cfg.get("fee_multiplier", 2.0),
+                apply_final_close_fee=multi_cfg.get("apply_final_close_fee", False),
+                funding_efficiency=multi_cfg.get("funding_efficiency", 0.5)  # NEW: 50% efficiency
             )
             res = backtest_multi_slot(
                 db_path=db_path,
                 coins=coins,
                 params=params,
                 return_curve=False,
-                debug=False
+                debug=False,
+                start_dt=start_dt,
+                end_dt=end_dt
             )
             results_grid.append({
                 "slots": slots,
@@ -471,6 +454,10 @@ if __name__ == "__main__":
     df_grid.to_csv("grid_results.csv", index=False)
     print(df_grid)
     print("\nSaved grid results to grid_results.csv")
+
+    print("\nTop 15 parameter sets by total return %:")
+    df_top_total = df_grid.sort_values("total_return_pct", ascending=False).head(15)
+    print(df_top_total[["slots","min_hold_days","annualized_return_pct","total_return_pct","avg_hold_days","total_switches"]].to_string(index=False))
 
     # Apply, sort, and show the top combinations
     df_scored = add_option_c_score(df_grid, w_ret=0.6, w_slots=0.20, w_hold=0.20)
