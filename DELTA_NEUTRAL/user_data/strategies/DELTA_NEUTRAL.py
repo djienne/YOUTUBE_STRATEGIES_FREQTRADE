@@ -900,7 +900,7 @@ class DELTA_NEUTRAL(IStrategy):
         "0": 5000.0  # Effectively disables ROI
     }
     stoploss = -0.90
-    timeframe = '1m'
+    timeframe = '5m'
     startup_candle_count: int = 0
     can_short: bool = True
     process_only_new_candles: bool = False
@@ -1334,3 +1334,4 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
+
