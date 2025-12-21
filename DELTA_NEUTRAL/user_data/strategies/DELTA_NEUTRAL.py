@@ -53,8 +53,15 @@ def _to_hour_start(dt: datetime) -> datetime:
 def load_db(path: str) -> dict:
     if not os.path.exists(path):
         return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = f.read().strip()
+        if not raw:
+            return {}
+        return json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+        write_log(f"Funding DB parse failed for {path}: {exc}. Resetting to empty.")
+        return {}
 
 def save_db(path: str, db: dict) -> None:
     tmp = path + ".tmp"
@@ -444,7 +451,6 @@ def get_account_total_equity():
         Returns:
             Price in USDC as float
         """
-
         # Initialize the Info client
         info = Info(constants.MAINNET_API_URL, skip_ws=True)
 
@@ -736,6 +742,7 @@ def record_hourly_funding_by_pair(
     pair: str,
     funding_val: float,
     tz: timezone | None = None,
+    file_path: Union[str, Path, None] = None,
 ) -> None:
     """
     Persist `funding_val` for a given trading `pair` with one‑hour resolution.
@@ -755,8 +762,7 @@ def record_hourly_funding_by_pair(
     tz          : datetime.timezone | None, optional
         Clock to use when stamping the hour. If None, the system local tz is used.
     """
-    here = Path(__file__).resolve().parent
-    file_path = here / "historical_funding_rates_DB.json"
+    file_path = Path(file_path) if file_path else Path(__file__).resolve().parent / "historical_funding_rates_DB.json"
 
     # 1) Current hour (truncate to 00:00 in minutes/seconds)
     now = datetime.now(tz=tz)
@@ -902,8 +908,8 @@ class DELTA_NEUTRAL(IStrategy):
     # Tunable parameters
     MINIMUM_FUNDING_APR_pc = 10
     MINIMUM_VOLUME_usdc = 2_500_000
-    MINIMUM_TIME_TO_KEEP_POSITION_hour = 24*60 # minimum time for a delta neutral position to be kept openned to have a good chance it compensates the opening+closing fees of the spot and futures trades
-                                               # here 60 days
+    MINIMUM_TIME_TO_KEEP_POSITION_hour = 24*30 # minimum time for a delta neutral position to be kept openned to have a good chance it compensates the opening+closing fees of the spot and futures trades
+                                               # here 30 days
     MAX_POSITIONS = 2  # Maximum number of open positions
 
     # State variables (do not touch)
@@ -985,7 +991,7 @@ class DELTA_NEUTRAL(IStrategy):
         self.has_looped_once = False
         if self.config["runmode"].value in ('live', 'dry_run'):
             
-            # retrive historical fundings for the last days and update the funding database (in case there would be missing data)
+            # retrive historical fundings for the last 30 days and update the funding database (in case there would be missing data)
             write_log("Updating fundings database historical_funding_rates_DB.json with historical data from API.")
             here = Path(__file__).resolve().parent
             db_path = here / "historical_funding_rates_DB.json"
@@ -1082,7 +1088,7 @@ class DELTA_NEUTRAL(IStrategy):
                     if self.nb_loop == 3 or self.nb_loop%10==0:
                         write_log(f"Current Funding rates (APR %): {self.FUNDINGS}")
                         write_log(f"Current QUOTE_VOLUMES (USDC): {self.QUOTE_VOLUMES}")
-                        write_log(f"List of {len(self.BEST_PAIRS)} / {self.config["max_open_trades"]}max best pair(s): ")
+                        write_log(f"List of {len(self.BEST_PAIRS)} / {self.config['max_open_trades']}max best pair(s): ")
                         for i, pair in enumerate(self.BEST_PAIRS, 1):
                             write_log(f"  BEST_PAIR_{i}: {pair} ({self.FUNDINGS[pair]:.1f}% ; {self.QUOTE_VOLUMES[pair]:.1f})")
                         write_log(f"Number of open positions: [{open_count}]")
@@ -1328,4 +1334,3 @@ class DELTA_NEUTRAL(IStrategy):
         lev = 1
         write_log(f"Using leverage: {lev}. Should not be changed.")
         return lev
-
