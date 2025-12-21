@@ -1,11 +1,11 @@
 {
     "max_open_trades": 2,
     "stake_currency": "USDC",
-    "stake_amount": 15,
+    "stake_amount": 25,
     "tradable_balance_ratio": 0.99,
     "amount_reserve_percent": 0.01,
-    "available_capital": 200000.0,
-    "dry_run_wallet": 200000.0,
+    "available_capital": 20000.0,
+    "dry_run_wallet": 20000.0,
     "dry_run": false,
     "fee": 0.001,
     "cancel_open_orders_on_exit": true,
@@ -36,15 +36,8 @@
         "name": "hyperliquid",
         "walletAddress": "",
         "privateKey": "",
-        "ccxt_config": {
-            "enableRateLimit": true,
-            "rateLimit": 20
-        },
-        "ccxt_async_config": {
-            "enableRateLimit": true,
-            "rateLimit": 20
-        },
         "pair_whitelist": [
+            "BTC/USDC:USDC",
             "ETH/USDC:USDC",
             "SOL/USDC:USDC",
             "HYPE/USDC:USDC",
@@ -82,7 +75,7 @@
     "telegram": {
         "enabled": false,
         "token": "",
-        "chat_id": ""
+        "chat_id": "1655109323"
     },
     "api_server": {
         "enabled": false,
@@ -93,18 +86,15 @@
         "Force_entry": true,
         "forcebuy_enable": true,
         "force_entry_enable": true,
-        "jwt_secret_key": "d1654caf3c530f6b037ae59a999d9d9328dec66bdd68799112cf1ba7d65276a3",
+        "jwt_secret_key": "a9f2b8c4e71d6a530f1c98d4b2e67a1f0c3e5d9b84a7f261d5e093bc4a8f71de",
         "CORS_origins": [],
         "username": "ft",
-        "password": "trumpkamala"
+        "password": "kamala"
     },
     "bot_name": "DELTA_NEUTRAL",
     "initial_state": "running",
     "force_entry_enable": true,
     "internals": {
-        "process_throttle_secs": 30
+        "process_throttle_secs": 60
     }
-
 }
-
-
