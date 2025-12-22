@@ -2,7 +2,7 @@
 
 Delta-neutral funding strategy for Hyperliquid: shorts perps, longs spot, and rebalances to stay market-neutral while harvesting positive funding.
 
-Associated Youtube video (https://youtu.be/M5MzD10rc0w)[https://youtu.be/M5MzD10rc0w] .
+Associated Youtube video [https://youtu.be/M5MzD10rc0w] .
 
 ## Quick start (Docker)
 
