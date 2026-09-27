@@ -1,0 +1,2 @@
+WARNING: USING THE METHOD "predict" OF THE HMM MODEL OVER A CHUNCK OF DATA MAY CAUSE REPAINTING
+See folder CHECK_REPAINT for a python script to check for this.

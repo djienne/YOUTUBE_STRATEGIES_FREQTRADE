@@ -1,0 +1,9 @@
+freqtrade backtesting --strategy SUPPORT_RESISTANCE --config ./user_data/config_bt.json --timeframe 12h --timerange 20180101-
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade download-data --timeframe 12h 4h 1d --timerange 20170101- --config ./user_data/config_bt.json
+
+freqtrade hyperopt --strategy SUPPORT_RESISTANCE --timeframe 12h --config ./user_data/config_bt.json --analyze-per-epoch --hyperopt-loss MultiMetricHyperOptLoss --timerange 20180101-20250211 --min-trades 50 --spaces buy -j 4 -e 5000
+
+freqtrade plot-profit --timeframe 12h

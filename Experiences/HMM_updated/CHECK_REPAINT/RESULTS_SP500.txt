@@ -1,0 +1,21 @@
+Period: 2015-01-02 - 2025-03-28
+
+Portfolio Metrics for Fast May-Repaint Long-Only Strategy:
+Sharpe Ratio: 1.10
+Capital Final: 54022.98
+Max Drawdown: 9.94%
+Calmar Ratio: 1.66
+Sortino Ratio: 1.20
+Beta: 0.3463
+Alpha (annual): 0.0918
+CAGR (%): 17.96%
+
+Portfolio Metrics for Slow No-Repaint Long-Only Strategy:
+Sharpe Ratio: 0.27
+Capital Final: 23064.98
+Max Drawdown: 15.46%
+Calmar Ratio: 0.53
+Sortino Ratio: 0.28
+Beta: 0.4245
+Alpha (annual): 0.0031
+CAGR (%): 8.53%

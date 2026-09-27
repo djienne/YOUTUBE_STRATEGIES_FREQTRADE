@@ -1,0 +1,33 @@
+{
+    "strategy_name": "Claude",
+    "params": {
+        "roi": {},
+        "buy": {
+            "atr_multiplier": 2.2,
+            "atr_period": 13,
+            "ema_long": 36,
+            "ema_short": 14,
+            "entry_method": "ema_cross",
+            "macd_fast": 9,
+            "macd_signal": 12,
+            "macd_slow": 29,
+            "rsi_oversold": 32,
+            "rsi_period": 20
+        },
+        "sell": {
+            "rsi_overbought": 67
+        },
+        "protection": {},
+        "stoploss": {
+            "stoploss": -0.212
+        },
+        "trailing": {
+            "trailing_stop": true,
+            "trailing_stop_positive": 0.333,
+            "trailing_stop_positive_offset": 0.371,
+            "trailing_only_offset_is_reached": true
+        }
+    },
+    "ft_stratparam_v": 1,
+    "export_time": "2024-10-01 14:15:23.231080+00:00"
+}

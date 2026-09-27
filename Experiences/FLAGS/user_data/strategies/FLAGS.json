@@ -1,0 +1,30 @@
+{
+  "strategy_name": "FLAGS",
+  "params": {
+    "roi": {
+      "0": 5000
+    },
+    "stoploss": {
+      "stoploss": -0.85
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 8
+    },
+    "buy": {
+      "LEV": 4,
+      "hold_mult": 1.9,
+      "order": 189,
+      "pattern_type": "both"
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2025-02-24 06:28:30.447591+00:00"
+}

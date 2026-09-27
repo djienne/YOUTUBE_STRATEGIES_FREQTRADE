@@ -1,0 +1,39 @@
+---
+version: '3'
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 18.22.0.0/16
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:2025.4
+    # image: freqtradeorg/freqtrade:develop
+    # Use plotting image
+    # image: freqtradeorg/freqtrade:develop_plot
+    # Build step - only needed when additional dependencies are needed
+    build:
+      context: .
+      dockerfile: "./Dockerfile.technical"
+    restart: unless-stopped
+    container_name: QuatreMousquetaires
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Expose api on port 8080 (localhost only)
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
+    # before enabling this.
+    # ports:
+    #   - "127.0.0.1:8082:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Limit to 50% of a single CPU core
+          memory: '512M'   # Limit to 512MB of RAM
+    # Default command used when running `docker compose up`
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.sqlite
+      --config /freqtrade/user_data/config.json
+      --strategy QuatreMousquetaires

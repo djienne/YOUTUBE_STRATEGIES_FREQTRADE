@@ -1,0 +1,28 @@
+{
+  "strategy_name": "SUPPORT_RESISTANCE",
+  "params": {
+    "roi": {
+      "0": 5000
+    },
+    "stoploss": {
+      "stoploss": -0.85
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 3
+    },
+    "buy": {
+      "atr_mult": 3.2,
+      "first_w": 1.6
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2025-03-04 16:06:17.063482+00:00"
+}

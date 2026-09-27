@@ -1,0 +1,39 @@
+{
+  "strategy_name": "MartyEMA",
+  "params": {
+    "roi": {
+      "0": 5000.0
+    },
+    "stoploss": {
+      "stoploss": -0.9
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 4
+    },
+    "buy": {
+      "DOWN": 15,
+      "LEV": 2.0,
+      "UP": 10,
+      "atr_per": 14,
+      "dca_factor": 0.3,
+      "delta_ema2": 67,
+      "delta_ema3": 149,
+      "ema1": 8,
+      "nb_levels": 4,
+      "rsi_length_p": 16,
+      "stochOverBought": 0.8,
+      "stochOverSold": 0.2,
+      "stochWindow": 21
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-11-19 11:59:25.299326+00:00"
+}

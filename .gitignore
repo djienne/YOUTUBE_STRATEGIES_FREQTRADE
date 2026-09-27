@@ -1,0 +1,30 @@
+# Credentials and local overrides
+.env
+.env.*
+!.env.example
+config-private.json
+config-local.json
+
+# Publish source files rather than bundled projects or runtime state.
+*.zip
+*.7z
+*.rar
+__pycache__/
+*.py[cod]
+*.sqlite*
+*.db
+*.log
+*.log.*
+*.feather
+*.parquet
+*.bak
+equity_track.csv
+position_data/
+**/user_data/data/
+**/user_data/logs/
+**/user_data/backtest_results/
+**/user_data/hyperopt_results/
+**/user_data/freqaimodels/
+**/user_data/plot/
+!dummy
+!dummy.txt

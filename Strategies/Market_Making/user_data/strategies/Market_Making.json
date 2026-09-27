@@ -1,0 +1,40 @@
+{
+  "strategy_name": "Market_Making",
+  "params": {
+    "roi": {
+      "0": -1.0
+    },
+    "stoploss": {
+      "stoploss": -0.95
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 1
+    },
+    "buy": {
+      "SPREAD_DOWN1": 0.83,
+      "SPREAD_DOWN2": 0.92,
+      "SPREAD_UP1": 0.21,
+      "SPREAD_UP2": 0.18,
+      "atr_or_std1": "atr",
+      "atr_or_std2": "atr",
+      "multiplicator_DOWN1": 1.8,
+      "multiplicator_DOWN2": 0.7,
+      "multiplicator_UP1": 0.2,
+      "multiplicator_UP2": 0.2,
+      "nper1": 131,
+      "nper2": 35,
+      "st_short_atr_multiplier": 3.0,
+      "st_short_atr_window": 19
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2024-12-27 01:52:37.179721+00:00"
+}

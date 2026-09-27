@@ -1,0 +1,42 @@
+{
+  "db_path": "funding_db_test.json",
+  "coins": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "HYPE",
+    "PUMP",
+    "FARTCOIN",
+    "PURR"
+  ],
+  "downloader": {
+    "start_time_utc": null,
+    "end_time_utc": null,
+    "total_days": 365,
+    "window_days": 5,
+    "overlap_days": 2.0,
+    "rate_limit_seconds": 0.1,
+    "backoff_base_seconds": 0.5,
+    "backoff_max_seconds": 10.0
+  },
+  "simple_backtest": {
+    "initial_balance": 1000.0,
+    "gap_behavior": "skip",
+    "compounding": true,
+    "funding_efficiency": 0.5,
+    "start_time_utc": null,
+    "end_time_utc": null
+  },
+  "multi_slot_backtest": {
+    "initial_balance": 1000.0,
+    "slots": 2,
+    "min_hold_days": 30,
+    "open_fee_rate": 0.0006,
+    "close_fee_rate": 0.0006,
+    "fee_multiplier": 2.0,
+    "apply_final_close_fee": false,
+    "funding_efficiency": 0.5,
+    "start_time_utc": null,
+    "end_time_utc": null
+  }
+}

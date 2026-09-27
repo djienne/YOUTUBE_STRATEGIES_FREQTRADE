@@ -1,0 +1,19 @@
+{
+  "exchange": {
+    "walletAddress": "",
+    "privateKey": "",
+    "privateKeyEthWallet": "",
+    "ccxt_config": {
+      "enableRateLimit": true,
+      "rateLimit": 200
+    },
+    "ccxt_async_config": {
+      "enableRateLimit": true,
+      "rateLimit": 200
+    }
+  },
+  "api_server": {
+    "enabled": false,
+    "verbosity": "info"
+  }
+}

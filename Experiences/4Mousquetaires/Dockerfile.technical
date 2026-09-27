@@ -1,0 +1,13 @@
+FROM freqtradeorg/freqtrade:2025.4
+
+# Switch to root user
+USER root
+
+RUN apt-get update && apt-get install -y git
+
+# Switch to ftuser user
+USER ftuser
+
+RUN pip3 install ta tqdm scipy plotly yfinance
+
+RUN pip3 install --upgrade --no-cache-dir git+https://github.com/rongardF/tvdatafeed.git

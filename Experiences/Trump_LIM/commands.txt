@@ -1,0 +1,7 @@
+freqtrade backtesting --strategy Trump_LIM --config ./user_data/config_bt.json --timeframe 1m --timerange 20250116-
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade download-data --timeframe 5m 1m --days 190 --config ./user_data/config_bt.json
+
+freqtrade hyperopt --strategy Trump_LIM --timeframe 1m --config ./user_data/config_bt.json --hyperopt-loss MultiMetricHyperOptLoss --timerange 20250116- --min-trades 20 --spaces buy -j 24 -e 500

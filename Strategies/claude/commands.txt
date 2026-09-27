@@ -1,0 +1,7 @@
+# Run from this project directory; adapt dates and local configuration.
+docker compose build
+docker compose up -d
+
+# Download data and backtest with this project's runtime configuration.
+docker compose run --rm freqtrade download-data --config user_data/config.json --timeframes 1h --timerange 20240101-20260101
+docker compose run --rm freqtrade backtesting --strategy Claude --config user_data/config.json --timerange 20250101-20260101 --cache none

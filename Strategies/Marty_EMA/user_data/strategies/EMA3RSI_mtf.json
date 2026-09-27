@@ -1,0 +1,40 @@
+{
+  "strategy_name": "EMA3SRSI_mtf",
+  "params": {
+    "roi": {
+      "0": 5000.0,
+      "10080": -1
+    },
+    "stoploss": {
+      "stoploss": -0.9
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 2
+    },
+    "buy": {
+      "DOWN": 8,
+      "LEV": 1.0,
+      "UP": 10,
+      "atr_per": 13,
+      "dca_factor": 0.0,
+      "ema1": 84,
+      "ema2": 176,
+      "ema3": 421,
+      "nb_levels": 2,
+      "rsi_length_p": 15,
+      "stochOverBought": 0.5,
+      "stochOverSold": 0.2,
+      "stochWindow": 16
+    },
+    "sell": {},
+    "protection": {}
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2023-11-01 06:03:35.814964+00:00"
+}

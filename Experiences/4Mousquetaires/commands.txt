@@ -1,0 +1,9 @@
+freqtrade backtesting --strategy QuatreMousquetaires --config ./user_data/config.json --timeframe 1d --timerange 20180101-
+
+freqtrade hyperopt-show --best -n -1
+
+freqtrade download-data --timeframe 1d 4h --timerange 20170101- --config ./user_data/config.json
+
+freqtrade hyperopt --strategy QuatreMousquetaires --timeframe 1d --analyze-per-epoch --config ./user_data/config.json --hyperopt-loss MultiMetricHyperOptLoss --timerange 20180101- --min-trades 20 --spaces buy -j 8 -e 5000
+
+freqtrade plot-profit --timeframe 1d
