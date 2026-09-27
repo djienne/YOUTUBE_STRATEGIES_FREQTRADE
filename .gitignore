@@ -19,6 +19,12 @@ __pycache__/
 *.parquet
 *.bak
 equity_track.csv
+delta_neutral_state.json
+delta_neutral_state.tmp
+settled_funding_rates.json
+settled_funding_rates.tmp
+funding_observations.json
+funding_observations.tmp
 position_data/
 **/user_data/data/
 **/user_data/logs/

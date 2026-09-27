@@ -1,3 +1,11 @@
+# These are manual account experiments, not the offline test suite.
+import os as _os
+if __name__ != '__main__':
+    from unittest import SkipTest
+    raise SkipTest('Manual live-account experiment; use tests_offline for automated checks')
+if _os.environ.get('DELTA_NEUTRAL_ALLOW_LIVE_TESTS') != '1':
+    raise SystemExit('Refusing live account access. Explicitly set DELTA_NEUTRAL_ALLOW_LIVE_TESTS=1 to opt in.')
+
 
 TEST = False # if True, will not execute the rebalancing on the account
 
