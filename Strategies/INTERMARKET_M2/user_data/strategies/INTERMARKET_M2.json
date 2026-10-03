@@ -1,0 +1,30 @@
+{
+  "strategy_name": "INTERMARKET_M2",
+  "params": {
+    "roi": {
+      "0": 500.0
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 2
+    },
+    "buy": {
+      "atr_lookback": 35,
+      "flip": -1,
+      "lookback": 6,
+      "threshold": 0.05
+    },
+    "sell": {},
+    "protection": {},
+    "stoploss": {
+      "stoploss": -0.95
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2025-03-07 19:54:01.931772+00:00"
+}

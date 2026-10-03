@@ -1,0 +1,3 @@
+# Local FRED cache; retain the public ALFRED research snapshot.
+/user_data/m2/WM2NS_fred.csv
+/user_data/m2/WM2NS_fred.tmp

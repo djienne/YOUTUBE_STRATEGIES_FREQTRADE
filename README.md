@@ -16,6 +16,7 @@ code, parameter exports, configurations and project files kept together.
 | [DELTA_NEUTRAL](Strategies/DELTA_NEUTRAL/) | `DELTA_NEUTRAL` |
 | [Donchian](Strategies/Donchian/) | `donchian` |
 | [Ichimoku](Strategies/Ichimoku/) | `Ichimoku` |
+| [INTERMARKET_M2](Strategies/INTERMARKET_M2/) | `INTERMARKET_M2` (M2-only, spot) |
 | [Market_Making](Strategies/Market_Making/) | `Market_Making` |
 | [Marty_EMA](Strategies/Marty_EMA/) | `MartyEMA` |
 | [SIMPLE_RSI](Strategies/SIMPLE_RSI/) | `SimpleRSI` |

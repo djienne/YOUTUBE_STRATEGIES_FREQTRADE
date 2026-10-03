@@ -1,0 +1,69 @@
+{
+    "max_open_trades": 2,
+    "stake_currency": "USDT",
+    "stake_amount": "unlimited",
+    "tradable_balance_ratio": 0.99,
+    "amount_reserve_percent": 0.01,
+    "available_capital": 1000.0,
+    "dry_run_wallet": 1000.0,
+    "dry_run": true,
+    "fee": 0.001,
+    "cancel_open_orders_on_exit": true,
+    "trading_mode": "spot",
+    "margin_mode": "",
+    "unfilledtimeout": {
+        "entry": 15,
+        "exit": 15,
+        "exit_timeout_count": 10,
+        "unit": "seconds"
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "exchange": {
+        "name": "binance",
+        "key": "",
+        "secret": "",
+        "ccxt_config": {
+            "enableRateLimit": true,
+            "rateLimit": 400
+        },
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 400
+        },
+        "pair_whitelist": [
+            "BTC/USDT",
+            "ETH/USDT"
+        ],
+        "pair_blacklist": [
+            "WBTC/USDT"
+        ]
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList",
+            "number_assets": 2,
+            "sort_key": "quoteVolume",
+            "min_value": 10000,
+            "refresh_period": 1800
+        }
+    ],
+    "bot_name": "INTERMARKET_M2",
+    "initial_state": "running",
+    "internals": {
+        "process_throttle_secs": 25
+    }
+}

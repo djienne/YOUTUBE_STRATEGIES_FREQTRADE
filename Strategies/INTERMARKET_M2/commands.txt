@@ -1,0 +1,11 @@
+# Dry run (M2 is read from FRED at each new 12h candle)
+docker compose up -d
+
+# Backtest: Binance candles, then every published version of M2 (ALFRED), then the backtest.
+# config_backtest.json starts trading 490 candles after the first candle (2018-04-19 on Binance).
+docker compose run --rm freqtrade download-data --config user_data/config.json --timeframes 12h --timerange 20170801-
+docker compose run --rm --entrypoint python freqtrade user_data/download_m2_vintages.py
+docker compose run --rm freqtrade backtesting --config user_data/config.json --config user_data/config_backtest.json --strategy INTERMARKET_M2 --timerange 20170817-20250307
+
+# Hyperopt (the parameters are used in populate_indicators, hence --analyze-per-epoch)
+docker compose run --rm freqtrade hyperopt --config user_data/config.json --config user_data/config_backtest.json --strategy INTERMARKET_M2 --analyze-per-epoch --hyperopt-loss MultiMetricHyperOptLoss --spaces buy --timerange 20170817-20250307 -e 1000
